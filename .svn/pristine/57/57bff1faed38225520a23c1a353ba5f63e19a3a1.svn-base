@@ -1,0 +1,760 @@
+<template>
+  <div style="padding:0 10px;margin-top:10px;">
+    <el-button @click="open1" v-show="false">消息</el-button>
+      <el-button @click="open2" v-show="false">消息</el-button>
+      <el-button @click="open3" v-show="false">消息</el-button>
+    <section>
+      <!--头部功能栏-->
+      <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+        <el-form :inline="true" :model="filters">
+          <el-form-item label="冷库列表">
+            <el-select v-model="select" filterable placeholder="请选择" style="width:200px;">
+              <el-option v-for="item in oprations" :key="item.index" :label="item.name" :value="item.id" ref="dataInfo">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="设备编号">
+            <el-input v-model="filters.name" placeholder="请输入设备" style="width:200px;" @keyup.enter.native="getUsers"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" v-on:click="getUsers">查询</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleAdd">报警设置</el-button>
+          </el-form-item>
+       
+          <el-form-item style="float:right;cursor: pointer;">
+            <i>
+              <img src="../../assets/icon/excel.png">
+            </i>
+            <span type="primary" @click="exportTable()">Excel</span>
+          </el-form-item>
+        </el-form>
+      </el-col>
+      <!--表格列表-->
+      <el-table :data="allnum" highlight-current-row :height="windowHeigh" @click="toggleSelection" v-loading="listLoading" style="border-right:solid 1px #dfe6ec"
+        @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" label="全选/取消" :selectable='checkboxInit'>
+        </el-table-column>
+        <el-table-column prop="unitName" label="设备名称" width="220">
+        </el-table-column>
+        <el-table-column prop="fnum" label="设备编号" width="300">
+        </el-table-column>
+        <el-table-column prop="unitName" label="所属单位" min-width="380" :show-overflow-tooltip="true">
+        </el-table-column>
+        <el-table-column label="操作" width="75" fixed="right">
+          <template scope="scope">
+            <span class="font-color" style="color: #328fea; display: inline-block; cursor: pointer;" size="small" @click="handleEdit(scope.$index, scope.row)">编辑</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <!--报警设置界面-->
+      <el-dialog :title="title" v-model="addFormVisible" :close-on-click-modal="false" :show-close="false">
+        <el-form :model="addForm" label-width="80px" :rules="addFormRules" ref="addForm" @click="clecl">
+          <el-row>
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark blue">阀值设置</div>
+            </el-col>
+            <el-col style="width:30px;height:30px;position:absolute;text-align:center; background:none;top: -58px;right:-10px;font-size: 16px;
+                  font-weight: 700; font-weight:normal;color: #a1a9bc;cursor:pointer">
+              <div @click="closeShow">ㄨ</div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="12">
+              <div class="grid-content bg-purple">
+                <div class="title-color">温度阀值</div>
+                <el-input v-model="tmp1min" auto-complete="off" style="width:60px; float: left;"></el-input>
+                <span class="title-span">-</span>
+                <el-input v-model="tmp1max" auto-complete="off" style="width:60px; float: left;"></el-input>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="grid-content bg-purple-light">
+                <div class="title-color">湿度阀值</div>
+                <el-input v-model="hum1min" auto-complete="off" style="width:60px; float: left;"></el-input>
+                <span class="title-span">-</span>
+                <el-input v-model="hum1max" auto-complete="off" style="width:60px; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark blue">升级报警间隔</div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="8">
+              <div class="grid-content bg-purple">
+                <div class="title-color">一级到二级</div>
+                <el-input v-model="level2NextTime" auto-complete="off" style="width:40px; float: left;"></el-input>
+                <div class="title-fen">分钟</div>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="grid-content bg-purple-light">
+                <div class="title-color">二级到三级</div>
+                <el-input v-model="level3NextTime" auto-complete="off" style="width:40px; float: left;"></el-input>
+                <div class="title-fen">分钟</div>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="grid-content bg-purple"></div>
+              <div class="title-color">三级到四级</div>
+              <el-input v-model="level4NextTime" auto-complete="off" style="width:40px; float: left;"></el-input>
+              <div class="title-fen">分钟</div>
+            </el-col>
+          </el-row>
+           <!-- 邮件 -->
+           <div style="height:20px; width:100%;"></div>
+           <el-row>
+            <el-col :span="12">
+              <div class="grid-content bg-purple blue">邮件(多个联系人用英文","隔开)</div>
+            </el-col>
+            <el-col :span="12">
+              <div class="grid-content bg-purple-light">
+                <span style="float: right; margin-right: 20%;">邮件免费</span>
+                <div class="radius-mg">?</div>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">一级联系人</div>
+                <el-input v-model="level1Emails" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">二级联系人</div>
+                <el-input v-model="level2Emails" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">三级联系人</div>
+                <el-input v-model="level3Emails" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">四级联系人</div>
+                <el-input v-model="level4Emails" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <!-- 短信 -->
+           <div style="height:20px; width:100%;"></div>
+          <el-row>
+            <el-col :span="12">
+              <div class="grid-content bg-purple blue">短信(多个联系人用英文","隔开)</div>
+            </el-col>
+            <el-col :span="12">
+              <div class="grid-content bg-purple-light">
+                <span style="float: right; margin-right: 20%;">短信收费</span>
+                <div class="radius-mg">?</div>
+              </div>
+            </el-col>
+          </el-row>
+
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">一级联系人</div>
+                <el-input v-model="level1Mobiles" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">二级联系人</div>
+                <el-input v-model="level2Mobiles" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">三级联系人</div>
+                <el-input v-model="level3Mobiles" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">四级联系人</div>
+                <el-input v-model="level4Mobiles" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+             <!-- 微信 -->
+              <div style="height:20px; width:100%;"></div>
+                  <el-row>
+            <el-col :span="12">
+              <div class="grid-content bg-purple blue">微信(多个联系人用英文","隔开)</div>
+            </el-col>
+            <el-col :span="12">
+              <div class="grid-content bg-purple-light">
+                <span style="float: right; margin-right: 20%;">微信收费</span>
+                <div class="radius-mg">?</div>
+              </div>
+            </el-col>
+          </el-row>
+
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">一级联系人</div>
+                <el-input v-model="level1WeiXin" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">二级联系人</div>
+                <el-input v-model="level2WeiXin" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">三级联系人</div>
+                <el-input v-model="level3WeiXin" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">四级联系人</div>
+                <el-input v-model="level4WeiXin" auto-complete="off" style="width:80%; float: left;"></el-input>
+              </div>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click.native="addFormVisible = false" @click="clecl">取消</el-button>
+          <el-button type="primary" @click="addSubmit" :loading="addLoading">提交</el-button>
+        </div>
+      </el-dialog>
+    </section>
+    <el-footer class="footer-bottom">
+      <!--工具条-->
+      <el-col :span="24" class="toolbar-bot">
+        <span class="demonstration" style="float: left; margin-top: 10px;">共:{{total}}条</span>
+        <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage1"
+          :page-size="size" layout="prev, pager, next, jumper" :total="total">
+        </el-pagination>
+      </el-col>
+    </el-footer>
+  </div>
+</template>
+<script>
+// 获取浏览器可视窗口高度
+var liuHeight = document.documentElement.clientHeight - 220;
+  import htmlToPdf from "../../components/htmlToPdf/htmlToPdf";
+// 格式化时间
+import util from "../../common/js/util";
+import {
+  getUserListPage,
+  removeUser,
+  batchRemoveUser,
+  editUser,
+  addUser,
+  unitTree,
+  equipment,
+  saveWarnBatch,
+  getWarnData
+} from "../../api/api";
+export default {
+  inject: ["reload"],
+  data() {
+    return {
+      // 报警设置
+      num:"",
+      currentPage1: 1,
+      total: 0,
+      page: 1,
+      size: 20,
+      nodeIds: [],
+      tmp1max: "",
+      tmp1min: "",
+      hum1max: "",
+      hum1min: "",
+      level2NextTime: "",
+      level3NextTime: "",
+      level4NextTime: "",
+      level1Emails: "",
+      level2Emails: "",
+      level3Emails: "",
+      level4Emails: "",
+      level1Mobiles: "",
+      level2Mobiles: "",
+      level3Mobiles: "",
+      level4Mobiles: "",
+      level1WeiXin:"",
+      level2WeiXin:"",
+      level3WeiXin:"",
+      level4WeiXin:"",
+      windowHeigh: "",
+      // 报警设置结束
+      checkboxInit: "",
+      multipleSelection: [],
+      title: "报警设置",
+      filters: {
+        plate: "",
+        name: ""
+      },
+      select: "",
+      oprations: [],
+      allnum: [],
+      options: [],
+      users: [],
+      listLoading: false,
+      sels: [], //列表选中列
+      editFormVisible: false, //编辑界面是否显示
+      editLoading: false,
+      editFormRules: {
+        name: [
+          {
+            required: true,
+            message: "请输入姓名",
+            trigger: "blur"
+          }
+        ],
+        plate: [
+          {
+            required: true,
+            message: "请输入车牌号",
+            trigger: "blur"
+          }
+        ]
+      },
+      //编辑界面数据
+      editForm: {
+        id: 0,
+        name: "",
+        plate: "",
+        sex: -1,
+        age: 0,
+        birth: "",
+        addr: ""
+      },
+      addFormVisible: false, //新增界面是否显示
+      addLoading: false,
+      addFormRules: {
+        name: [
+          {
+            required: true,
+            message: "请输入姓名",
+            trigger: "blur"
+          }
+        ],
+        plate: [
+          {
+            required: true,
+            message: "请输入车牌号",
+            trigger: "blur"
+          }
+        ]
+      },
+      //新增界面数据
+      addForm: {
+        name: "",
+        plate: "",
+        sex: -1,
+        age: 0,
+        birth: "",
+        addr: ""
+      }
+    };
+  },
+  created: function() {
+    this.windowHeigh = liuHeight;
+    unitTree().then(data => {
+      if (data.data.code == -1) {
+        this.$message({
+          message: msg,
+          type: "error"
+        });
+      } else {
+        this.oprations = data.data.msg;
+      }
+    });
+  },
+  methods: {
+    open1() {
+      this.$message({
+        message: "请填写完整信息",
+        type: "warning"
+      });
+    },
+    open2() {
+      this.$message({
+        message: "提交成功",
+        type: "success"
+      });
+    },
+    open3() {
+      this.$message({
+        message: "请勾选设备",
+        type: "warning"
+      });
+    },
+     toggleSelection(rows) {
+        if (rows) {
+          rows.forEach(row => {
+            this.$refs.multipleTable.toggleRowSelection(row);
+          });
+        } else {
+          this.$refs.multipleTable.clearSelection();
+        }
+      },
+      // handleSelectionChange(val) {
+      //   this.multipleSelection = val;
+      // },
+     // excel导出
+      exportTable() {
+        require.ensure([], () => {
+          const {
+            export_json_to_excel
+          } = require("../../vendor/Export2Excel");
+          const tHeader = [
+            "设备名称",
+            "设备编号",
+            "所属单位",
+            "操作"
+          ];
+          const filterVal = [
+            "unitName",
+            "fnum",
+            "unitName"
+          ];
+          const list = this.allnum;
+          const data = this.formatJson(filterVal, list);
+          export_json_to_excel(tHeader, data, "监控中心列表");
+        });
+      },
+      
+      formatJson(filterVal, jsonData) {
+        return jsonData.map(v => filterVal.map(j => v[j]));
+      },
+      // excel导出结束
+    closeShow() {
+      this.addFormVisible = false;
+    },
+    handleSelectionChange(row) {
+      // console.log(row)
+      this.nodeIds=[]
+      for (var i = 0; i < row.length; i++) {
+        this.nodeIds[i] = row[i].id;
+      }
+      // console.log(row);
+      // console.log(this.nodeIds);
+    },
+    //分页
+
+    handleSizeChange(val) {
+      // alert(`每页 ${val} 条`);
+      this.size = val;
+      this.getUsers();
+    },
+    handleCurrentChange(val) {
+      this.page = val;
+      this.getUsers();
+    },
+    //获取用户列表
+    getUsers() {
+      var that = this;
+      let para = {
+        page: this.page,
+        size: this.size,
+        unitIds: that.select,
+        fnum: that.filters.name
+      };
+      this.listLoading = true;
+      //查询的结果
+      equipment(para).then(res => {
+        this.allnum = res.data.msg.rows;
+        this.total = res.data.msg.total;
+        console.log(res.data.msg.rows);
+        this.listLoading = false;
+      });
+    },
+
+    //显示编辑界面
+
+    //显示报警界面
+    handleAdd: function() {
+      if (this.nodeIds.length <= 0) {
+        this.open3()
+        return;
+      }
+      this.addFormVisible = true;
+      // this.nodeIds=[]
+    },
+    handleEdit: function(index, row) {
+      this.title = "编辑设置";
+      this.addFormVisible = true;
+      this.nodeIds=[];
+      this.nodeIds.push(row.id);
+      console.log(this.nodeIds);
+      var that = this;
+      let para = {
+        id: that.nodeIds[0]
+      };
+      getWarnData(para).then(data => {
+        console.log(data);
+        (that.tmp1max = data.msg.tmp1max),
+          (that.tmp1min = data.msg.tmp1min),
+          (that.hum1max = data.msg.hum1max),
+          (that.hum1min = data.msg.hum1min),
+          (that.level2NextTime = data.msg.level2NextTime),
+          (that.level3NextTime = data.msg.level3NextTime),
+          (that.level4NextTime = data.msg.level4NextTime),
+          (that.level1Emails = data.msg.level1Emails),
+          (that.level2Emails = data.msg.level2Emails),
+          (that.level3Emails = data.msg.level3Emails),
+          (that.level4Emails = data.msg.level4Emails),
+          (that.level1Mobiles = data.msg.level1Mobiles),
+          (that.level2Mobiles = data.msg.level2Mobiles),
+          (that.level3Mobiles = data.msg.level3Mobiles),
+          (that.level4Mobiles = data.msg.level4Mobiles);
+          (that.level1WeiXin = data.msg.level1WeiXin);
+          (that.level2WeiXin = data.msg.level2WeiXin);
+          (that.level3WeiXin = data.msg.level3WeiXin);
+          (that.level4WeiXin = data.msg.level4WeiXin);
+      });
+    },
+    clecl: function() {
+
+    },
+    //编辑
+    // editSubmit: function() {
+    //   this.$refs.editForm.validate(valid => {
+    //     if (valid) {
+    //       this.$confirm("确认提交吗？", "提示", {}).then(() => {
+    //         this.editLoading = true;
+    //         let para = Object.assign({}, this.editForm);
+    //         para.birth =
+    //           !para.birth || para.birth == ""
+    //             ? ""
+    //             : util.formatDate.format(new Date(para.birth), "yyyy-MM-dd");
+    //         editUser(para).then(res => {
+    //           this.editLoading = false;
+    //           this.$message({
+    //             message: "提交成功",
+    //             type: "success"
+    //           });
+    //           this.$refs["editForm"].resetFields();
+    //           this.editFormVisible = false;
+    //           this.getUsers();
+    //         });
+    //       });
+    //     }
+    //   });
+    // },
+    //报警/编辑的提交
+    addSubmit: function() {
+      this.num=""
+      for(var i=0;i<this.nodeIds.length;i++){
+         var that = this;
+      let para = {
+        nodeIds: that.nodeIds[i],
+        tmp1max: that.tmp1max,
+        tmp1min: that.tmp1min,
+        hum1max: that.hum1max,
+        hum1min: that.hum1min,
+        level2NextTime: that.level2NextTime,
+        level3NextTime: that.level3NextTime,
+        level4NextTime: that.level4NextTime,
+        level1Emails: that.level1Emails,
+        level2Emails: that.level2Emails,
+        level3Emails: that.level3Emails,
+        level4Emails: that.level4Emails,
+        level1Mobiles: that.level1Mobiles,
+        level2Mobiles: that.level2Mobiles,
+        level3Mobiles: that.level3Mobiles,
+        level4Mobiles: that.level4Mobiles,
+        level1WeiXin: that.level1WeiXin,
+        level2WeiXin: that.level2WeiXin,
+        level3WeiXin: that.level3WeiXin,
+        level4WeiXin: that.level4WeiXin
+      };
+      //查询的结果
+       this.num=i;
+          
+      saveWarnBatch(para).then(data => {
+        var that = this;
+        if (data.code == -1) {
+          // if(i==this.nodeIds.length){
+                this.open1()
+              //  }
+        } else {
+        // alert(this.num+1==this.nodeIds.length)
+          if(this.num+1==this.nodeIds.length){
+            this.num++
+                 this.open2( this.getUsers())
+               this.addFormVisible = false;
+               this.handleSelectionChange()
+               this.nodeIds=[];
+              //  alert(2)
+              
+               return;
+               }
+               
+          that.nodeIds = [],
+          that.addFormVisible = false,
+          that.tmp1max = "",
+            that.tmp1min = "",
+            that.hum1max = "",
+            that.hum1min = "",
+            that.level2NextTime = "",
+            that.level3NextTime = "",
+            that.level4NextTime = "",
+            that.level1Emails = "",
+            that.level2Emails = "",
+            that.level3Emails = "",
+            that.level4Emails = "",
+            that.level1Mobiles = "",
+            that.level2Mobiles = "",
+            that.level3Mobiles = "",
+            that.level4Mobiles = "";
+            that.level1WeiXin = "";
+            that.level2WeiXin = "";
+            that.level3WeiXin = "";
+            that.level4WeiXin = ""
+               
+        }
+      });
+      }
+    }
+  },
+  mounted() {
+    this.getUsers();
+  }
+};
+</script>
+
+<style scoped>
+  .el-col {
+    background: #fff;
+  }
+
+  .toolbar-bot {
+    text-align: right;
+    margin-top: 10px;
+  }
+
+  .toolbar {
+    box-shadow: 0 0 6px 0 #dcdfe6;
+  }
+
+  .el-form-item i img {
+    width: 20px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .el-form-item span {
+    color: #328fea;
+    line-height: 21px;
+    margin-right: 10px;
+  }
+
+  .font-color {
+    margin-right: 10px;
+    color: #328fea;
+  }
+
+  .el-table {
+    margin-bottom: 80px;
+  }
+
+  .footer-bottom {
+    position: fixed;
+    padding: 0 0 10px 0;
+    bottom: 0;
+    left: 224px;
+    width: 81%;
+    background: #fff;
+    z-index: 100;
+  }
+
+  .el-dialog__header {
+    background: darkgreen !important;
+  }
+
+  .title-color {
+    width: 100px;
+    text-align: center;
+    float: left;
+    line-height: 35px;
+  }
+
+  .title-span {
+    width: 20px;
+    text-align: center;
+    float: left;
+    line-height: 35px;
+  }
+
+  .title-fen {
+    width: 40px;
+    text-align: center;
+    float: left;
+    line-height: 35px;
+  }
+
+  .label {
+    width: 100px;
+    padding: 11px 0 11px 0 !important;
+  }
+
+  .jian-ge {
+    padding: 6px 0;
+  }
+
+  .blue {
+    color: #328fea;
+  }
+
+  .dialog-footer {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+
+  .baojing {
+    width: 540px;
+    background: #fff;
+    border-radius: 3px;
+    overflow: hidden;
+    position: fixed;
+    left: 50%;
+    top: 15%;
+    margin-left: -270px;
+  }
+  .radius-mg{
+    float:right;
+    width:16px;
+    heigth:16px;
+    border-radius:50%;
+    overflow:hidden;
+    color:#fff;
+    text-align:center;
+    background:#2E86DF;
+    margin:2px 2px 0 0;
+  }
+</style>

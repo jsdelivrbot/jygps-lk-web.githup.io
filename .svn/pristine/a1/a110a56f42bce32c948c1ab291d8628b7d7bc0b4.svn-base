@@ -1,0 +1,3405 @@
+<template>
+  <div style="padding:0 10px;margin-top:10px;">
+    <span style="position:absolute;top:50%;left:50%;z-index:99;display:block;width:100px;height:100px;"></span>
+    <el-button @click="open1" v-show="false">消息</el-button>
+    <!-- <el-button :plain="true" @click="open2">成功</el-button>
+    <el-button :plain="true" @click="open3">暂无数据</el-button>
+    <el-button :plain="true" @click="open4">错误</el-button> -->
+    <section>
+      <!--工具条-->
+      <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+        <el-form :inline="true" :model="filters.name" class="demo-form-inline">
+          <el-form-item label="冷库列表">
+            <el-select v-model="filters.name" filterable placeholder="请选择">
+              <el-option v-for="item in oprations" :key="item.index" :label="item.name" :value="item.id" ref="dataInfo">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="时间区间">
+            <div class="block">
+              <el-date-picker v-model="value1" type="datetime" value-format="yyyy-MM-dd" placeholder="选择开始日期时间">
+              </el-date-picker>
+            </div>
+          </el-form-item>
+          <el-form-item label="-">
+            <div class="block">
+              <el-date-picker v-model="value2" type="datetime" value-format="yyyy-MM-dd" placeholder="选择结束日期时间">
+              </el-date-picker>
+            </div>
+          </el-form-item>
+          <el-form-item>
+            <!-- 查询 -->
+            <el-button type="primary" @click="getUserst">查询</el-button>
+
+            <el-button :plain="false" @click="open8" v-show="false"></el-button>
+          </el-form-item>
+          <el-form-item style="float:right;cursor: pointer;">
+            <i>
+            <a :href="'http://114.55.138.209:8091/jygpsTmp/vehicletmpdetailinfo/exportPdf?'+
+             'unitId='+this.filters.name+'&startTime='+value1+'&endTime='+value2">
+              <img src="../../assets/icon/pdf.png" width="20" height="14">
+              </a>
+            </i>
+            <a style="color:#328fea;text-decoration:none;" :href="'http://114.55.138.209:8091/jygpsTmp/vehicletmpdetailinfo/exportPdf?'+
+             'unitId='+this.filters.name+'&startTime='+value1+'&endTime='+value2">Pdf</a>
+          </el-form-item>
+          <el-form-item style="float:right;cursor: pointer;">
+            <i>
+              <img src="../../assets/icon/excel.png" width="20" height="14" @click="excels">
+            </i>
+              <a style="color:#328fea;" @click="excels">Excel</a>
+
+          </el-form-item>
+        </el-form>
+      </el-col>
+      <!-- 列表-新加了一个id用于PDF导出 -->
+      <el-table-column prop="nodename" label="节点名称" width="150" fixed="left" :show-overflow-tooltip="true">
+      </el-table-column>
+      <template>
+        <section class="chart-container chart1-container" :style={height:liuHeights}>
+          <el-row style="margin: 2% 0 0 0" v-if="xianshi">
+            <el-col :span="8" style="position:relative" v-if="allnode[0]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[0].nodename">▌{{allnode[0].nodename}}</div>
+              <div class="jump_info" @click="jump_info(1)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart1" style="margin:0 auto;;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+            <el-col :span="8" style="position:relative" v-if="allnode[1]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[1].nodename">▌{{allnode[1].nodename}}</div>
+              <div class="jump_info" @click="jump_info(2)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart2" style="margin:0 auto;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+            <el-col :span="8" style="position:relative" v-if="allnode[2]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[2].nodename">▌{{allnode[2].nodename}}</div>
+              <div class="jump_info" @click="jump_info(3)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart3" style="margin:0 auto;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+          </el-row>
+
+            <el-col :span="8" style="position:relative" v-if="allnode[3]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[3].nodename">▌{{allnode[3].nodename}}</div>
+              <div class="jump_info" @click="jump_info(4)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart4" style="margin:0 auto;;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+            <el-col :span="8" style="position:relative" v-if="allnode[4]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[4].nodename">▌{{allnode[4].nodename}}</div>
+              <div class="jump_info" @click="jump_info(5)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart5" style="margin:0 auto;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+            <el-col :span="8" style="position:relative" v-if="allnode[5]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[5].nodename">▌{{allnode[5].nodename}}</div>
+              <div class="jump_info" @click="jump_info(6)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart6" style="margin:0 auto;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+
+
+            <el-col :span="8" style="position:relative" v-if="allnode[6]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[6].nodename">▌{{allnode[6].nodename}}</div>
+              <div class="jump_info" @click="jump_info(7)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart7" style="margin:0 auto;;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+            <el-col :span="8" style="position:relative" v-if="allnode[7]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[7].nodename">▌{{allnode[7].nodename}}</div>
+              <div class="jump_info" @click="jump_info(8)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart8" style="margin:0 auto;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+            <el-col :span="8" style="position:relative" v-if="allnode[8]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[8].nodename">▌{{allnode[8].nodename}}</div>
+              <div class="jump_info" @click="jump_info(9)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart9" style="margin:0 auto;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+
+
+            <el-col :span="8" style="position:relative" v-if="allnode[9]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[9].nodename">▌{{allnode[9].nodename}}</div>
+              <div class="jump_info" @click="jump_info(10)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart10" style="margin:0 auto;;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+            <el-col :span="8" style="position:relative" v-if="allnode[10]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[10].nodename">▌{{allnode[10].nodename}}</div>
+              <div class="jump_info" @click="jump_info(11)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart11" style="margin:0 auto;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+            <el-col :span="8" style="position:relative" v-if="allnode[11]" v-loading="loading">
+              <div class="titleNname" :title="'▌'+allnode[11].nodename">▌{{allnode[11].nodename}}</div>
+              <div class="jump_info" @click="jump_info(12)">
+                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+              </div>
+              <div id="chart12" style="margin:0 auto;width:96%;height:200px;border: 1px solid #C7C7C7;"></div>
+            </el-col>
+
+        </section>
+      </template>
+      <!-- 弹出开始 -->
+      <div class="content" v-if="newadds">
+
+        <div class="contenter">
+         <div class="delet" @click="delet">ㄨ</div>
+          <el-table :data="all_node" highlight-current-row :height="500" style="border-right:solid 1px #dfe6ec;height:300px;overflow: hidden;"
+            @selection-change="handleSelectionChange">
+            <!-- 多选框去除 -->
+            <!-- <el-table-column type="selection" width="55" label="全选/取消">
+            </el-table-column> -->
+            <el-table-column prop="nodeName" label="节点名称" width="140" :show-overflow-tooltip="true">
+            </el-table-column>
+            <el-table-column prop="temperature1" label="温度" width="100">
+            </el-table-column>
+            <el-table-column prop="hum" label="湿度" min-width="100" :show-overflow-tooltip="true">
+            </el-table-column>
+            <el-table-column prop="gpsTime" label="记录时间" min-width="380" :show-overflow-tooltip="true" sortable>
+            </el-table-column>
+            <el-table-column prop="installPos" label="安装位置" min-width="380" :show-overflow-tooltip="true">
+            </el-table-column>
+          </el-table>
+          <el-footer class="footer-fenye">
+            <!--工具条-->
+            <el-col :span="24" class="toolbar-bot">
+              <span class="demonstration" style="margin-top: 10px; line-height:32px;">共:{{total}}条</span>
+              <el-pagination style="cursor:pointer" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage1" :page-size="size"
+                layout="prev, pager, next, jumper" :total="total">
+              </el-pagination>
+            </el-col>
+          </el-footer>
+        </div>
+      </div>
+      <!-- 弹出结束 -->
+    </section>
+  </div>
+</template>
+
+<script>
+var liuHeight = document.documentElement.clientHeight - 180 + "px";
+import util from "../../common/js/util";
+import axios from "axios";
+import echarts from "echarts";
+import {
+  getUserListPage,
+  removeUser,
+  batchRemoveUser,
+  editUser,
+  addUser,
+  history,
+  allNode,
+  unitTree,
+  newhistory,
+  exportPdf,
+  excels,
+  getNode,
+  nodeinfo
+} from "../../api/api";
+export default {
+  data() {
+    return {
+      pdfUrl: "",
+      tmp1min: "",
+      tmp2min: "",
+      tmp3min: "",
+      tmp4min: "",
+      tmp5min: "",
+      tmp6min: "",
+      tmp7min: "",
+      tmp8min: "",
+      tmp9min: "",
+      tmp10min: "",
+      tmp12min: "",
+      tmp1max: "",
+      tmp2max: "",
+      tmp3max: "",
+      tmp4max: "",
+      tmp5max: "",
+      tmp6max: "",
+      tmp7max: "",
+      tmp8max: "",
+      tmp9max: "",
+      tmp10max: "",
+      tmp11max: "",
+      tmp12max: "",
+      hum1min: "",
+      hum2min: "",
+      hum3min: "",
+      hum4min: "",
+      hum5min: "",
+      hum6min: "",
+      hum7min: "",
+      hum8min: "",
+      hum9min: "",
+      hum10min: "",
+      hum12min: "",
+      hum1max: "",
+      hum2max: "",
+      hum3max: "",
+      hum4max: "",
+      hum5max: "",
+      hum6max: "",
+      hum7max: "",
+      hum8max: "",
+      hum9max: "",
+      hum10max: "",
+      hum11max: "",
+      hum12max: "",
+      allinfo: [],
+      liuHeights: "",
+      newadds: false,
+      xianshi: false,
+      all_node: [],
+      num: "",
+      // echart图
+      myChart1: null,
+      myChart2: null,
+      myChart3: null,
+      myChart4: null,
+      myChart5: null,
+      myChart6: null,
+      myChart7: null,
+      myChart8: null,
+      myChart9: null,
+      jiedianid: [],
+      a: [],
+      allnodedetail: [],
+      // myChart: [],
+      allnum: [],
+      label: "",
+      value: "",
+      value1: "",
+      value2: "",
+      value3: "",
+      value4: "",
+      filters: {
+        name: "",
+        id: ""
+      },
+      select: "",
+      allnode: [],
+      oprations: [],
+      users: [],
+      currentPage1: 1,
+      total: 0,
+      page: 1,
+      size: 15,
+      loading: false,
+      sels: [], //列表选中列
+      editLoading: false,
+      startTime: "",
+      endTime: "",
+      vehicleId: ""
+    };
+  },
+  beforeCreate() {},
+  // created() {
+
+  // },
+  // beforeMount() {},
+  //  beforeUpdate () {
+  //   this.getUserst()
+  // },
+  //echart图
+  mounted: function() {
+    this.liuHeights = liuHeight;
+    this.loading = true;
+    allNode().then(data => {
+      this.loading = false;
+      if (data.data.code == -1) {
+        this.$message({
+          message: msg,
+          type: "error"
+        });
+      } else {
+        this.$nextTick(() => {
+          this.allnode = data.data.msg;
+          for (var i = 0; i < this.allnode.length; i++) {
+            this.allnode[i].nodename = this.allnode[i].name;
+          }
+          this.getUsers();
+        });
+      }
+    });
+    // 第二个echarts图
+    // 第三个echarts图
+    // 第四个echarts图
+    // 第5个echarts图
+    // 第6个echarts图
+    // 第7个echarts图
+    // 第8个echarts图
+    // 第9个echarts图
+
+    /*ECharts图表*/
+  },
+
+  created: function() {
+    this.loading = true;
+    unitTree().then(data => {
+      this.loading = false;
+      if (data.data.code == -1) {
+        this.$message({
+          message: msg,
+          type: "error"
+        });
+      } else {
+        this.oprations = data.data.msg;
+      }
+    });
+    this.sysUserName = ruleForm2.account;
+  },
+  methods: {
+    excels() {
+
+        // alert(this.oprations[i].id)
+        var that = this;
+        let para = {
+          page: 1,
+          size: 20,
+          unitId: this.filters.name,
+          startTime: this.value1,
+          endTime: this.value2
+        };
+        excels(para).then(data => {
+          // this.loading=false
+          if (data.code == -1) {
+          } else {
+            var lengkuId=this.filters.name
+            window.location.href =
+              "http://114.55.138.209:8091/jygpsTmp/vehicletmpdetailinfo/exportExcel?unitId=" +
+              lengkuId+
+              "&page=" +
+              that.page +
+              "&startTime=" +
+              that.value1 +
+              "&endTime=" +
+              that.value2;
+          }
+        });
+
+    },
+    open1() {
+      this.$message({
+        message: "暂无数据",
+        type: "warning"
+      });
+    },
+    handleSizeChange(val) {
+      // alert(`每页 ${val} 条`);
+      this.size = val;
+      this.jump_info(this.num);
+    },
+    handleCurrentChange(val) {
+      this.page = val;
+      this.jump_info(this.num);
+    },
+    // 第一个echarts图
+    displayEchart1(data) {
+      this.myChart1 = echarts.init(document.getElementById("chart1"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp1max = tmp0max;
+        this.tmp1min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp1max = maxs;
+        this.tmp1min = mins;
+      }
+      // for(var j=0;j<tmp1Array.length;j++){
+      //   var numbe=""
+      //   if(tmp1Array[j]==""){
+      //     numbe=j
+      //     tmp1Array.splice(numbe,1)
+      //   }
+
+      // }
+      // for(var j=0;j<tmp1Array.length;j++){
+      //   var numbe=""
+      //   if(tmp1Array[j]==""){
+      //     alert(tmp1Array[37])
+
+      //   }
+
+      // }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option1 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp1min,
+            max: this.tmp1max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      this.myChart1.setOption(option1);
+    },
+    drawChart1() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      // alert(this.allnode[0].id)
+      let para = {
+        size: 99,
+        page: 1,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[0].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart1(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts1() {
+      this.displayEchart1();
+    },
+    // 第二个echarts图
+    displayEchart2(data) {
+      this.myChart2 = echarts.init(document.getElementById("chart2"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp2max = tmp0max;
+        this.tmp2min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp2max = maxs;
+        this.tmp2min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option2 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp2min,
+            max: this.tmp2max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      this.myChart2.setOption(option2);
+    },
+    drawChart2() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: 1,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[1].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart2(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts2() {
+      this.displayEchart2();
+    },
+    // 第三个echarts图
+    displayEchart3(data) {
+      this.myChart3 = echarts.init(document.getElementById("chart3"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp3max = tmp0max;
+        this.tmp3min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp3max = maxs;
+        this.tmp3min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option3 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp3min,
+            max: this.tmp3max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+
+      this.myChart3.setOption(option3);
+      // console.log(this.allnodedd)
+    },
+    drawChart3() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: 1,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[2].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart3(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts3() {
+      this.displayEchart3();
+    },
+    // 第四个echarts图
+    displayEchart4(data) {
+      this.myChart4 = echarts.init(document.getElementById("chart4"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp4max = tmp0max;
+        this.tmp4min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp4max = maxs;
+        this.tmp4min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option4 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp4min,
+            max: this.tmp4max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      this.myChart4.setOption(option4);
+      // console.log(this.allnodedd)
+    },
+    drawChart4() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: 1,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[3].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart4(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts4() {
+      this.displayEchart4();
+    },
+    // 第5个echarts图
+    displayEchart5(data) {
+      this.myChart5 = echarts.init(document.getElementById("chart5"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp5max = tmp0max;
+        this.tmp5min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp5max = maxs;
+        this.tmp5min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option5 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp5min,
+            max: this.tmp5max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      this.myChart5.setOption(option5);
+      // console.log(this.allnodedd)
+    },
+    drawChart5() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: 1,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[4].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart5(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts5() {
+      this.displayEchart5();
+    },
+    // 第6个echarts图
+    displayEchart6(data) {
+      this.myChart6 = echarts.init(document.getElementById("chart6"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        // 湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp6max = tmp0max;
+        this.tmp6min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp6max = maxs;
+        this.tmp6min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option6 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp6min,
+            max: this.tmp6max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      this.myChart6.setOption(option6);
+      // console.log(this.allnodedd)
+    },
+    drawChart6() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: 1,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[5].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart6(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts6() {
+      this.displayEchart6();
+    },
+    // 第7个echarts图
+    displayEchart7(data) {
+      this.myChart7 = echarts.init(document.getElementById("chart7"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp7max = tmp0max;
+        this.tmp7min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp7max = maxs;
+        this.tmp7min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option7 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp7min,
+            max: this.tmp7max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      // console.log(allnodedd);
+      //  console.log(option)
+      this.myChart7.setOption(option7);
+      // console.log(this.allnodedd)
+    },
+    drawChart7() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: 1,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[6].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart7(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts7() {
+      this.displayEchart7();
+    },
+    // 第8个echarts图
+    displayEchart8(data) {
+      this.myChart8 = echarts.init(document.getElementById("chart8"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp8max = tmp0max;
+        this.tmp8min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp8max = maxs;
+        this.tmp8min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option8 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp8min,
+            max: this.tmp8max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      // console.log(allnodedd);
+      //  console.log(option)
+      this.myChart8.setOption(option8);
+      // console.log(this.allnodedd)
+    },
+    drawChart8() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: this.page,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[7].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart8(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts8() {
+      this.displayEchart8();
+    },
+    // 第9个echarts图
+    displayEchart9(data) {
+      this.myChart9 = echarts.init(document.getElementById("chart9"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp9max = tmp0max;
+        this.tmp9min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp9max = maxs;
+        this.tmp9min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option9 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp9min,
+            max: this.tmp9max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      // console.log(allnodedd);
+      //  console.log(option)
+      this.myChart9.setOption(option9);
+      // console.log(this.allnodedd)
+    },
+    drawChart9() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: this.page,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[8].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart9(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts9() {
+      this.displayEchart9();
+    },
+    // 第10个echarts图
+    displayEchart10(data) {
+      this.myChart10 = echarts.init(document.getElementById("chart10"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp10max = tmp0max;
+        this.tmp10min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp10max = maxs;
+        this.tmp10min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option10 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp10min,
+            max: this.tmp10max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      // console.log(allnodedd);
+      //  console.log(option)
+      this.myChart10.setOption(option10);
+      // console.log(this.allnodedd)
+    },
+    drawChart10() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: this.page,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[9].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart10(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts10() {
+      this.displayEchart10();
+    },
+    // 第11个echarts图
+    displayEchart11(data) {
+      this.myChart11 = echarts.init(document.getElementById("chart11"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp11max = tmp0max;
+        this.tmp11min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp11max = maxs;
+        this.tmp11min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option11 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp11min,
+            max: this.tmp11max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      // console.log(allnodedd);
+      //  console.log(option)
+      this.myChart11.setOption(option11);
+      // console.log(this.allnodedd)
+    },
+    drawChart11() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+      let para = {
+        size: 999,
+        page: this.page,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[10].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart11(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts11() {
+      this.displayEchart11();
+    },
+    // 第12个echarts图
+    displayEchart12(data) {
+      this.myChart12 = echarts.init(document.getElementById("chart12"));
+      var tmp1Array = [];
+      var timeArray = [];
+      var hum1Array = [];
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+      }
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = hum1Array[1];
+      var hum0min = hum1Array[1];
+      for (var i = 0; i < data.length; i++) {
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      if (hum0max == "") {
+        hum0max = 0;
+        hum0min = 0;
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+        this.tmp12max = tmp0max;
+        this.tmp12min = tmp0min;
+      } else {
+        if (tmp0max == "") {
+          tmp0max = 0;
+        }
+
+        var maxs = hum0max;
+        var mins = hum0min;
+        if (tmp0max > hum0max) {
+          maxs = tmp0max;
+        }
+        if (tmp0min < hum0min) {
+          mins = tmp0min;
+        }
+        this.tmp12max = maxs;
+        this.tmp12min = mins;
+      }
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        data: hum1Array,
+        itemStyle: {
+          normal: {
+            color: "#F9BF66",
+            lineStyle: {
+              color: "#F9BF66"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        data: tmp1Array,
+        itemStyle: {
+          normal: {
+            opacity: 0,
+            color: "#60A0E6",
+            lineStyle: {
+              color: "#60A0E6"
+            }
+          }
+        },
+        markPoint: {
+          data: [
+            {
+              type: "max",
+              name: "最大值"
+            },
+            {
+              type: "min",
+              name: "最小值"
+            }
+          ]
+        }
+      };
+      const option12 = {
+        grid: {
+          x: 60,
+          y: 60,
+          x2: 35,
+          y2: 30,
+          borderWidth: 1
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            // saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: {
+              fontSize: "9"
+            },
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp12min,
+            max: this.tmp12max,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      // console.log(allnodedd);
+      //  console.log(option)
+      this.myChart12.setOption(option12);
+      // console.log(this.allnodedd)
+    },
+    drawChart12() {
+      var that = this;
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+        that.value3 =
+          !that.value3 || that.value3 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+        that.value4 =
+          !that.value4 || that.value4 == ""
+            ? ""
+            : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+      }
+
+      let para = {
+        size: 999,
+        page: this.page,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[11].id
+      };
+      //查询的结果
+      this.loading = true;
+      history(para).then(res => {
+        this.loading = false;
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.displayEchart12(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts12() {
+      this.displayEchart12();
+    },
+    // 第13个echarts图
+    // 画图
+    getUsers() {
+      this.xianshi = true;
+      this.drawChart1();
+      this.drawChart2();
+      this.drawChart3();
+      this.drawChart4();
+      this.drawChart5();
+      this.drawChart6();
+      this.drawChart7();
+      this.drawChart8();
+      this.drawChart9();
+      this.drawChart10();
+      this.drawChart11();
+      this.drawChart12();
+    },
+    open8() {
+      this.$message({
+        showClose: true,
+        message: "开始时间要小于结束时间",
+        type: "warning"
+      });
+    },
+    getUserst() {
+      var that = this;
+      if (this.value1 > this.value2) {
+        this.open8();
+        return;
+      }
+      that.value1 =
+        !that.value1 || that.value1 == ""
+          ? ""
+          : util.formatDate.format(new Date(that.value1), "yyyy-MM-dd hh:mm");
+      that.value2 =
+        !that.value2 || that.value2 == ""
+          ? ""
+          : util.formatDate.format(new Date(that.value2), "yyyy-MM-dd hh:mm");
+
+      this.value3 = this.value1;
+      this.value4 = this.value2;
+
+      var that = this;
+      let para = {
+        page: 1,
+        size: 99,
+        unitIds: this.filters.name
+        // nodename: that.filters.name
+      };
+      this.allnode = [];
+
+      //查询的结果
+      nodeinfo(para).then(res => {
+        this.allnode = res.msg.rows;
+        this.getUsers();
+      });
+
+      // this.drawChart1();
+      // this.drawChart2();
+      // this.drawChart3();
+      // this.drawChart4();
+      // this.drawChart5();
+      // this.drawChart6();
+      // this.drawChart7();
+      // this.drawChart8();
+      // this.drawChart9();
+      // this.drawChart10();
+      // this.drawChart11();
+      // this.drawChart12();
+    },
+
+    jump_info(index) {
+      // alert(this.page)
+      this.newadds = true;
+      var that = this;
+      this.num = index;
+      let para = {
+        size: that.size,
+        page: this.page,
+        startTime: this.value3,
+        endTime: this.value4,
+        vehicleId: this.allnode[index - 1].id
+      };
+      history(para).then(res => {
+        console.log(res);
+        var data = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          this.all_node = res.msg.data;
+        } else {
+          this.open1();
+        }
+        this.page = 1;
+        this.size = 15;
+      });
+    },
+    delet() {
+      this.newadds = false;
+    }
+  }
+};
+</script>
+<style>
+#chart1 > canvas {
+  height: 230px;
+  top: 40px;
+}
+</style>
+
+<style scoped>
+.footer-fenye {
+  position: absolute;
+  border-top: solid 1px #e4e4e4;
+  padding: 10px 1% 10px 1%;
+  bottom: 0;
+  left: 0;
+  width: 98%;
+  background: #fff;
+  z-index: 100;
+}
+
+.chart-container {
+  width: 100%;
+}
+.chart-container .el-col {
+  margin-bottom: 20px;
+  float: left;
+}
+
+.chart1-container {
+  /* height:560px; */
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.el-col {
+  background: #fff;
+}
+
+.toolbar {
+  box-shadow: 0 0 6px 0 #dcdfe6;
+}
+
+.newadd {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+
+.content {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  z-index: 999;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.568);
+}
+
+.contenter {
+  overflow: hidden;
+  position: relative;
+  width: 85%;
+  height: 600px;
+ margin: 40px auto;
+}
+
+.delet {
+  width: 50px;
+  height: 50px;
+  text-align: right;
+  line-height: 50px;
+ float: right;
+  font-size:16px; font-weight:normal;
+  color: #fff;
+  cursor: pointer;
+}
+
+.jump_info {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  right: 35px;
+  top: 6px;
+  z-index: 99;
+}
+.titleNname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100px;
+  height: 20px;
+  position: absolute;
+  left: 16px;
+  top: 4px;
+  z-index: 99;
+  font-size: 13px;
+  font-weight: normal;
+  color: #60a0e6;
+}
+.toolbar-bot .el-pagination {
+  float: right;
+}
+</style>

@@ -1,0 +1,818 @@
+<template>
+  <div style="padding:0 10px;margin-top:10px;">
+    <el-button @click="open1" v-show="false">消息</el-button>
+    <el-button @click="open2" v-show="false">消息</el-button>
+    <el-button @click="open3" v-show="false">消息</el-button>
+    <el-button @click="open4" v-show="false">消息</el-button>
+    <el-button @click="open5" v-show="false">消息</el-button>
+    <el-button @click="open6" v-show="false">消息</el-button>
+    <el-button @click="open7" v-show="false">消息</el-button>
+    <el-button @click="open8" v-show="false">消息</el-button>
+    <el-button @click="open9" v-show="false">消息</el-button>
+    <el-button @click="open10" v-show="false">消息</el-button>
+    <el-button @click="open11" v-show="false">消息</el-button>
+    <el-button @click="open12" v-show="false">消息</el-button>
+    <el-button @click="open13" v-show="false">消息</el-button>
+    <el-button @click="open20" v-show="false">消息</el-button>
+    <section>
+      <!--头部功能栏-->
+      <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+        <el-form :inline="true" :model="filters">
+          <el-form-item label="冷库列表">
+            <el-select v-model="select" filterable @change="select_node" placeholder="请选择" style="width:150px;">
+              <el-option v-for="item in oprations" :key="item.index" :label="item.name" :value="item.id" ref="dataInfo">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="用户名称" style="position: relative;">
+            <el-input v-model="filters.name" filterable placeholder="请填写用户名称" style="width:150px;">
+              <!-- <el-option v-for="item in allnums" :key="item.nodename" :label="item.nodename" :value="item.nodename" ref="dataInfo">
+              </el-option> -->
+            </el-input>
+          </el-form-item>
+          <!-- <el-form-item label="设备名称">
+            <el-input v-model="filters.name" placeholder="请输入设备名称" style="width:200px;" @keyup.enter.native="getUsers"></el-input>
+          </el-form-item> -->
+          <el-form-item>
+            <el-button type="primary" v-on:click="getUsers">查询</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleAdd">新建用户</el-button>
+          </el-form-item>
+          <!-- <el-form-item style="float:right;cursor: pointer;">
+            <i>
+              <img src="../../assets/icon/excel.png" @click="exportTable()">
+            </i>
+            <a style="color:#328fea;text-decoration:none;" @click="exportTable()">Excel</a>
+          </el-form-item> -->
+        </el-form>
+      </el-col>
+      <!--表格列表-->
+      <el-table :data="allnum" highlight-current-row :height="windowHeigh" @click="toggleSelection" v-loading="listLoading" style="border-right:solid 1px #dfe6ec"
+        @selection-change="handleSelectionChange">
+        <!-- <el-table-column type="selection" width="55" label="全选/取消" :selectable='checkboxInit'>
+        </el-table-column> -->
+        <el-table-column prop="username" label="用户名" width="220">
+        </el-table-column>
+        <el-table-column prop="email" label="邮箱" width="300">
+        </el-table-column>
+        <el-table-column prop="imgFile" label="安装图" min-width="180" :show-overflow-tooltip="true">
+        </el-table-column>
+        <el-table-column prop="unitName" label="公司" min-width="280" :show-overflow-tooltip="true">
+        </el-table-column>
+        <el-table-column label="操作" width="180" fixed="right">
+          <template scope="scope">
+            <span class="font-color" style="color: #328fea; display: inline-block; cursor: pointer;" size="small" @click="handleEdit(scope.$index, scope.row)">编辑</span>
+            <span v-if="newselect==1" class="font-color" style="color: #328fea; display: inline-block; cursor: pointer;" size="small"
+              @click="deletEdit(scope.$index, scope.row)">删除</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <!--编辑用户界面-->
+      <el-dialog :title="title" v-model="addFormVisible" :close-on-click-modal="false" :show-close="false" class="waring waringss">
+        <!-- <el-col style="width:30px;height:30px;text-align:center; background:red;float:right;margin-top:-100px;font-size: 16px;
+            font-weight: 700; font-weight:normal;color: #a1a9bc;cursor:pointer"> -->
+        <div @click="closeShow" style="width:30px;height:30px;text-align:center; background:none;position: absolute;right: 10px;top:10px;font-size: 16px;
+        font-weight: 700; font-weight:normal;color: #a1a9bc;cursor:pointer">ㄨ</div>
+        <!-- </el-col> -->
+        <!-- <div style="position: absolute;top: 0px">2323</div> -->
+        <el-form :model="addForm" label-width="80px" :rules="rules2" ref="addForm">
+
+
+
+
+
+          <!-- 邮件 -->
+          <div style="height:20px; width:100%;"></div>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color"><span style="color:red;">&nbsp;&nbsp;&nbsp;&nbsp;*</span>用户名
+                </div>
+                <el-form-item prop="username" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.username" style="width:100%;"></el-input>
+                </el-form-item>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">&nbsp;&nbsp;真实姓名</div>
+                <el-form-item prop="name" :rules="[
+                   
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.name" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level2Emails" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">&nbsp;电子邮箱</div>
+                <el-form-item prop="email" :rules="[
+                    
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.email" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level3Emails" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color"><span style="color:red;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*</span>密码</div>
+                <el-form-item prop="password" :rules="[
+                   
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.password" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level4Emails" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color"><span style="color:red;">*</span>确认密码</div>
+                <el-form-item prop="password1" :rules="[
+                   
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.password1" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level4Emails" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">&nbsp;&nbsp;&nbsp;&nbsp;安装图</div>
+                <el-upload
+  class="upload-demo"
+  action="https://jsonplaceholder.typicode.com/posts/"
+  :on-preview="handlePreview"
+  :on-remove="handleRemove"
+  :before-remove="beforeRemove"
+  multiple
+  :limit="3"
+  :on-exceed="handleExceed"
+  :file-list="fileList">
+  <el-button size="small" type="primary">点击上传</el-button>
+  <div slot="tip" class="el-upload__tip" style="display:inline-block">&nbsp;&nbsp;&nbsp;&nbsp;(只能上传jpg/png文件，且不超过500kb)</div>
+</el-upload>
+                <!-- <el-input v-model="imgFile" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;公司</div>
+
+                <!-- <el-form :inline="true">
+          <! <el-form-item label="冷库列表"> -->
+                <el-select v-model="select" filterable @change="select_node" placeholder="请选择" style="width:200px;">
+                  <el-option v-for="item in oprations" :key="item.index" :label="item.name" :value="item.id" ref="dataInfo">
+                  </el-option>
+                </el-select>
+                <!-- </el-form-item> -->
+                <!-- <el-form-item prop="unitId" :rules="[
+                   
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.unitId" style="width:100%;"></el-input>
+                </el-form-item> -->
+                <!-- <el-input v-model="level4Emails" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">设备权限</div>
+                <el-form-item prop="role" :rules="[
+                   
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.role" style="width:100%;" placeholder="需要权限输入1，其他无效"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level4Emails" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click.native="addFormVisible = false" @click="clecl">取消</el-button>
+          <el-button type="primary" :loading="addLoading" @click="addSubmit">提交</el-button>
+        </div>
+      </el-dialog>
+    </section>
+    <el-footer class="footer-bottom">
+      <!--工具条-->
+      <el-col :span="24" class="toolbar-bot">
+        <span class="demonstration" style="float: left; margin-top: 10px;">共:{{total}}条</span>
+        <el-pagination style="cursor:pointer" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage1"
+          :page-size="size" layout="prev, pager, next, jumper" :total="total">
+        </el-pagination>
+      </el-col>
+    </el-footer>
+  </div>
+</template>
+<script>
+  // 获取浏览器可视窗口高度
+  const cityOptions = ["上海", "北京", "广州", "深圳"];
+  var liuHeight = document.documentElement.clientHeight - 220;
+  import htmlToPdf from "../../components/htmlToPdf/htmlToPdf";
+  // 格式化时间
+  import util from "../../common/js/util";
+  import {
+    getUserListPage,
+    removeUser,
+    batchRemoveUser,
+    editUser,
+    addUser,
+    unitTree,
+    equipment,
+    saveWarnBatch,
+    getWarnData,
+    Userlist,
+    sysuserinfoSave,
+    sysuserinfogetUser,
+    sysuserinfodeletUser
+  } from "../../api/api";
+  export default {
+    inject: ["reload"],
+    data() {
+      return {
+        msgs: "",
+        checkAll: false,
+        checkedCities: [],
+        cities: cityOptions,
+        isIndeterminate: true,
+        //   上传安装图
+        
+        // 上传安装图
+        spanShow: false,
+        // 正则
+        addForm: {
+          id: "",
+          username: "",
+          name: "",
+          email: "",
+          password: "",
+          password1: "",
+          imgFile:"",
+        //   imgFile: [
+        //     {
+        //       name: 'food2.jpeg',
+        //   url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'
+        // }],
+          unitId: "",
+          role: ""
+        },
+        // 报警设置
+        num: "",
+        currentPage1: 1,
+        total: 0,
+        page: 1,
+        size: 20,
+        nodeIds: [],
+        windowHeigh: "",
+        // 报警设置结束
+        checkboxInit: "",
+        multipleSelection: [],
+        title: "报警设置",
+        filters: {
+          plate: "",
+          name: ""
+        },
+        select: "",
+        newselect: "",
+        oprations: [],
+        allnum: [],
+        allnums: [],
+        options: [],
+        users: [],
+        listLoading: false,
+        sels: [], //列表选中列
+        editFormVisible: false, //编辑界面是否显示
+        editLoading: false,
+        editFormRules: {
+          name: [{
+            required: true,
+            message: "请输入姓名",
+            trigger: "blur"
+          }],
+          plate: [{
+            required: true,
+            message: "请输入车牌号",
+            trigger: "blur"
+          }]
+        },
+        //编辑界面数据
+        editForm: {
+          id: 0,
+          name: "",
+          plate: "",
+          sex: -1,
+          age: 0,
+          birth: "",
+          addr: ""
+        },
+        addFormVisible: false, //新增界面是否显示
+        addLoading: false,
+        WeiXintest: 1,
+        Emailtest: 1,
+        Mobiletest: 1,
+        addFormRules: {
+          name: [{
+            required: true,
+            message: "请输入姓名",
+            trigger: "blur"
+          }],
+          plate: [{
+            required: true,
+            message: "请输入车牌号",
+            trigger: "blur"
+          }]
+        }
+        //新增界面数据
+        // addForm: {
+        //   tmp1max: "",
+        //   tmp1min: "",
+        //   hum1max: -1,
+        //   hum1min: 0,
+        //   birth: "",
+        //   addr: ""
+        // }
+      };
+    },
+    created: function () {
+      this.windowHeigh = liuHeight;
+      unitTree().then(data => {
+        if (data.data.code == -1) {
+          this.$message({
+            message: msg,
+            type: "error"
+          });
+        } else {
+          this.oprations = data.data.msg;
+          this.select = data.data.msg[0].id;
+          this.newselect = data.data.msg[0].id;
+          this.addForm.unitId = data.data.msg[0].id;
+        }
+      });
+    },
+    // computed:{
+    //     inpNum:{
+    //         get:function(){
+    //             return this.oldNum;
+
+    //         },
+    //         set:function(newValue){
+    //             this.oldNum=newValue.replace(/[^\d]/g,'');
+    //         }
+    //     }
+    // },
+    methods: {
+      handleCheckAllChange(val) {
+        // cityOptions=[]
+        let cityOptions = this.allnums;
+        this.filters.name = val ? cityOptions : [];
+        this.isIndeterminate = false;
+      },
+      handleCheckedCitiesChange(value) {
+        console.log(value);
+        let checkedCount = value.length;
+        this.checkAll = checkedCount === this.cities.length;
+        this.isIndeterminate =
+          checkedCount > 0 && checkedCount < this.allnums.length;
+      },
+      // 上传安装图
+      handleRemove(file, fileList) {
+        console.log(file, fileList);
+      },
+      handlePreview(file) {
+        console.log(file);
+      },
+      handleExceed(files, fileList) {
+        this.$message.warning(`当前限制选择 3 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
+      },
+      beforeRemove(file, fileList) {
+        return this.$confirm(`确定移除 ${ file.name }？`);
+      },
+      // 上传安装图
+      select_node() {
+        // alert(1)
+        this.filters.name = "";
+        this.getUserst();
+      },
+      open1() {
+        var aaa = this.msgs;
+        this.$message({
+          message: aaa,
+          type: "warning"
+        });
+      },
+      open2() {
+        this.$message({
+          message: "提交成功",
+          type: "success"
+        });
+      },
+      open4() {
+        this.$message({
+          message: "信息填写有误",
+          type: "warning"
+        });
+      },
+      open7() {
+        this.$message({
+          message: "用户名没有填写",
+          type: "warning"
+        });
+      },
+      open8() {
+        this.$message({
+          message: "请设置密码",
+          type: "warning"
+        });
+      },
+      open9() {
+        this.$message({
+          message: "邮箱没有填写完整或填写有误",
+          type: "warning"
+        });
+      },
+      open10() {
+        this.$message({
+          message: "2次密码不一致",
+          type: "warning"
+        });
+      },
+      toggleSelection(rows) {
+        if (rows) {
+          rows.forEach(row => {
+            this.$refs.multipleTable.toggleRowSelection(row);
+          });
+        } else {
+          this.$refs.multipleTable.clearSelection();
+        }
+      },
+
+      handleSelectionChange(val) {
+        this.multipleSelection = val;
+      },
+      // excel导出
+      exportTable() {
+        // this.loading2=true;
+        // setTimeout(()=>{
+        //   // this.loading2=false
+        // },3000)
+        window.location.href =
+          "http://114.55.138.209:8091/jygpsTmp/sysnodeinfo/deviceManagementExportExcel?unitIds=" +
+          this.select +
+          "&nodename=" +
+          this.filters.name;
+      },
+      // excel导出结束
+      closeShow() {
+        // this.getUsers();
+        this.addFormVisible = false;
+        // this.handleSelectionChange();
+        this.getUsers();
+        this.handleSelectionChange();
+      },
+      handleSelectionChange(row) {
+        // console.log(row)
+        this.nodeIds = [];
+        for (var i = 0; i < row.length; i++) {
+          this.nodeIds[i] = row[i].id;
+        }
+        // console.log(row);
+        // console.log(this.nodeIds);
+      },
+      //分页
+
+      handleSizeChange(val) {
+        // alert(`每页 ${val} 条`);
+        this.size = val;
+        this.getUsers();
+      },
+      handleCurrentChange(val) {
+        this.page = val;
+        this.getUsers();
+      },
+      //获取用户列表
+      getUsers() {
+        // alert(this.filters.name)
+        var that = this;
+        let para = {
+          page: that.page,
+          size: that.size,
+          unitIds: that.select,
+          username: that.filters.name
+        };
+        // this.listLoading = true;
+        //查询的结果
+        Userlist(para).then(res => {
+          console.log(res);
+          this.allnum = res.msg.rows;
+          this.total = res.msg.total;
+          //   console.log(res.data.msg.rows);
+          //   this.listLoading = false;
+        });
+      },
+      getUserst() {
+        var that = this;
+        let para = {
+          page: this.page,
+          size: this.size,
+          unitIds: that.select
+        };
+
+        console.log(para);
+        this.listLoading = true;
+        //查询的结果
+        equipment(para).then(res => {
+          this.allnums = res.data.msg.rows;
+          // this.total = res.data.msg.total;
+          console.log(res.data.msg.rows);
+          this.listLoading = false;
+        });
+      },
+
+      //显示编辑界面
+      spanShows() {
+        this.spanShow = false;
+      },
+      //显示报警界面
+      handleAdd: function () {
+        this.title = "新建用户";
+        this.addFormVisible = true;
+        var that = this;
+        (that.addForm.username = ""),
+        (that.addForm.name = ""),
+        (that.addForm.email = ""),
+        (that.addForm.password = ""),
+        (that.addForm.imgFile = ""),
+        (that.addForm.unitId = ""),
+        (that.addForm.role = "");
+      },
+      // 删除用户
+      deletEdit(index, row) {
+        var _this = this;
+      this.$confirm("确认删除用户名："+row.username+"  吗?", "提示", {
+        type: 'warning'
+      })
+        .then(() => {
+          // sessionStorage.removeItem("user");
+          // _this.$router.push("/");
+          var handleEditid = row.id;
+        var that = this;
+        let para = {
+          id: handleEditid
+        };
+        sysuserinfodeletUser(para).then(data => {
+          this.getUsers();
+          this.msgs = "删除成功";
+          this.open1();
+        });
+        })
+        .catch(() => {});
+        
+      },
+      // 删除用户
+      handleEdit: function (index, row) {
+        this.title = "编辑用户";
+        this.addFormVisible = true;
+        this.nodeIds = [];
+        this.nodeIds.push(row.id);
+        var handleEditid = row.id;
+        var that = this;
+        let para = {
+          id: handleEditid
+        };
+        sysuserinfogetUser(para).then(data => {
+          (that.addForm.username = data.msg.username),
+          (that.addForm.id = data.msg.id),
+          (that.addForm.name = data.msg.name),
+          (that.addForm.email = data.msg.email);
+          // (that.addForm.imgFile = data.msg.imgFile)
+          console.log(data);
+        });
+      },
+      clecl: function () {
+        this.getUsers();
+        this.handleSelectionChange();
+      },
+      //报警/编辑的提交
+      addSubmit: function () {
+        // this.addLoading=true
+        if (this.addForm.username === "") {
+          this.open7();
+          return;
+        }
+        if (this.addForm.email !== "") {
+          var reg = /^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/;
+          if (!reg.test(this.addForm.email)) {
+            this.msgs='邮箱格式有误'
+            this.open1();
+            return;
+          }
+        }
+        if (this.addForm.password === "") {
+          this.open8();
+          return;
+        }
+        if (this.addForm.password1 === "") {
+          
+          this.msgs = "请确认密码";
+          this.open1();
+          return;
+        }
+        if (this.addForm.password !== this.addForm.password1) {
+          this.open10();
+          return;
+        }
+
+        var that = this;
+        let para = {
+          id: that.addForm.id,
+          username: that.addForm.username,
+          name: that.addForm.name,
+          email: that.addForm.email,
+          password: that.addForm.password,
+          imgFile: that.addForm.imgFile,
+          unitId: that.select,
+          role: that.addForm.role
+        };
+        console.log(para);
+        //查询的结果
+        this.addLoading = false;
+        sysuserinfoSave(para).then(data => {
+          var that = this;
+          if (data.code == -1) {
+            this.msgs = data.msg;
+            this.open1();
+          } else {
+            this.addFormVisible = false;
+            this.open2();
+            this.getUsers();
+          }
+        });
+
+        this.handleSelectionChange();
+      }
+    },
+
+    // 表单验证
+    // computed: {
+    //   inpNum: {
+    //     get: function () {
+    //       return this.oldNum;
+    //     },
+    //     set: function (newValue) {
+    //       this.oldNum = newValue.replace(/[^\d]/g, "");
+    //     }
+    //   }
+    // },
+    // beforeMount () {
+
+    // },
+    mounted() {
+      this.getUsers();
+    }
+  };
+</script>
+<style>
+  .jian-ge .el-form-item__error {
+    width: 100px;
+  }
+
+  .waringss .el-dialog__body {
+    overflow: auto;
+    height: 40%;
+    padding-bottom: 0px;
+    padding-top: 0px;
+    border: 1px solid #bfcbd9;
+  }
+</style>
+
+<style scoped>
+  .el-form-item__error {
+    width: 100px;
+  }
+
+  .el-col {
+    background: #fff;
+  }
+
+  .toolbar-bot {
+    text-align: right;
+    margin-top: 10px;
+  }
+
+  .toolbar {
+    box-shadow: 0 0 6px 0 #dcdfe6;
+  }
+
+  .el-form-item i img {
+    width: 20px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .el-form-item span {
+    color: #328fea;
+    line-height: 21px;
+    margin-right: 10px;
+  }
+
+  .font-color {
+    margin-right: 10px;
+    color: #328fea;
+  }
+
+  .el-table {
+    margin-bottom: 80px;
+  }
+
+  .footer-bottom {
+    position: fixed;
+    padding: 0 0 10px 0;
+    bottom: 0;
+    left: 224px;
+    width: 81%;
+    background: #fff;
+    z-index: 100;
+  }
+
+  .el-dialog__header {
+    background: darkgreen !important;
+  }
+
+  .title-color {
+    width: 100px;
+    text-align: center;
+    float: left;
+    line-height: 35px;
+  }
+
+  .title-span {
+    width: 20px;
+    text-align: center;
+    float: left;
+    line-height: 35px;
+  }
+
+  .title-fen {
+    width: 40px;
+    text-align: center;
+    float: left;
+    line-height: 35px;
+  }
+
+  .label {
+    width: 100px;
+    padding: 11px 0 11px 0 !important;
+  }
+
+  .jian-ge {
+    /* padding: 6px 0; */
+  }
+
+  .blue {
+    color: #328fea;
+  }
+
+  .dialog-footer {
+    text-align: center;
+  }
+
+  .baojing {
+    width: 540px;
+    background: #fff;
+    border-radius: 3px;
+    overflow: hidden;
+    position: fixed;
+    left: 50%;
+    top: 15%;
+    margin-left: -270px;
+  }
+
+  .radius-mg {
+    float: right;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    overflow: hidden;
+    color: #fff;
+    text-align: center;
+    background: #2e86df;
+    margin: 2px 2px 0 0;
+  }
+</style>

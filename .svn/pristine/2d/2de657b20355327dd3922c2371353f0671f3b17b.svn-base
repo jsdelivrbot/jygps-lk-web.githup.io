@@ -1,0 +1,558 @@
+<template>
+    <div>
+      <el-button @click="open1" v-show="false">消息</el-button>
+      <el-button @click="open2" v-show="false">消息</el-button>
+        <section>
+            <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+                <el-form :inline="true" :model="filters" class="demo-form-inline">
+                    <el-form-item label="节点名称">
+                        <el-input v-model="jiedianname" placeholder="输入节点名称"></el-input>
+                    </el-form-item>
+                    <el-form-item label="时间区间">
+                        <div class="block">
+                            <el-date-picker v-model="value1" type="datetime" value-format="yyyy-MM-dd" placeholder="选择开始日期时间">
+                            </el-date-picker>
+                        </div>
+                    </el-form-item>
+                    <el-form-item label="-">
+                        <div class="block">
+                            <el-date-picker v-model="value2" type="datetime" value-format="yyyy-MM-dd" placeholder="选择结束日期时间">
+                            </el-date-picker>
+                        </div>
+                    </el-form-item>
+                    <el-form-item>
+                        <!-- 查询 -->
+                        <el-button type="primary" @click="getUsers">查询</el-button>
+                        
+                    </el-form-item>
+                    <!-- <el-form-item style="float:right;cursor: pointer;">
+                        <i>
+              <img src="../../assets/icon/pdf.png">
+            </i>
+                        <span type="primary" @click="getPdf()">Pdf</span>
+                    </el-form-item>
+                    <el-form-item style="float:right;cursor: pointer;">
+                        <i>
+              <img src="../../assets/icon/excel.png">
+            </i>
+                        <span type="primary" @click="exportTable()">Excel</span>
+                    </el-form-item> -->
+                </el-form>
+            </el-col>
+            <div class="content" v-if="newadds">
+                <div class="delet" @click="delet">X</div>
+                <div class="contenter">
+                    <el-table :data="newall_node" highlight-current-row :height="530" style="border-right:solid 1px #dfe6ec;height:300px;overflow: hidden;" @selection-change="handleSelectionChange">
+                        <el-table-column type="selection" width="55" label="全选/取消" :selectable='checkboxInit'>
+                        </el-table-column>
+                        <el-table-column prop="nodeName" label="节点名称" width="100">
+                        </el-table-column>
+                        <el-table-column prop="temperature1" label="温度" width="100">
+                        </el-table-column>
+                        <el-table-column prop="hum" label="湿度" min-width="100" :show-overflow-tooltip="true">
+                        </el-table-column>
+                        <el-table-column prop="gpsTime" label="记录时间" min-width="380" :show-overflow-tooltip="true" sortable>
+                        </el-table-column>
+                        <el-table-column prop="installPos" label="安装位置" min-width="340" :show-overflow-tooltip="true">
+                        </el-table-column>
+                    </el-table>
+                    <el-footer class="footer-fenye">
+                        <!--工具条-->
+                        <el-col :span="24" class="toolbar-bot">
+                            <span class="demonstration" style="float: left; margin-top: 10px;">共:{{total}}条</span>
+                            <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage1" :page-size="size" layout="prev, pager, next, jumper" :total="total">
+                            </el-pagination>
+                        </el-col>
+                    </el-footer>
+                </div>
+            </div>
+        </section>
+        <div>
+            <section>
+                <el-col class="toolbar">
+                    <section class="chart-container" v-loading="loading">
+                        <el-row>
+                            <div class="jump_info" @click="jump_info" v-show="all_node.length>0">
+                                <img src="../../assets/icon/lishi.png" width="20" alt="列表详情">
+                            </div>
+                            <div id="echarts" :style={height:liuHeights}></div>
+                        </el-row>
+                    </section>
+                </el-col>
+            </section>
+        </div>
+    </div>
+    <!-- 跳转页 -->
+</template>
+<script>
+var liuHeight = document.documentElement.clientHeight - 220 + "px";
+import util from "../../common/js/util";
+import echarts from "echarts";
+
+import { timers, allNode, history } from "../../api/api";
+
+export default {
+  data() {
+    return {
+      // temperature1: "",
+      loading:false,
+      tmp1min: "",
+      tmp1max: "",
+      hum1min: "",
+      hum1max: "",
+      liuHeights: "",
+      currentPage1: 1,
+      total: 0,
+      page: 1,
+      size: 20,
+      all_node: [],
+      newall_node: [],
+      newadds: false,
+      jiedianid: "",
+      jiedianname: "",
+      myChart: null,
+      nodedata: [
+        {
+          hum: "",
+          temperature1: ""
+        }
+      ],
+      chartColumn: null,
+
+      // nodeid:this.msgVal,
+      // pickerOptions1: {
+      //     shortcuts: [{
+      //             text: "今天",
+      //             onClick(picker) {
+      //                 picker.$emit("pick", new Date());
+      //             }
+      //         },
+      //         {
+      //             text: "昨天",
+      //             onClick(picker) {
+      //                 const date = new Date();
+      //                 date.setTime(date.getTime() - 3600 * 1000 * 24);
+      //                 picker.$emit("pick", date);
+      //             }
+      //         },
+      //         {
+      //             text: "一周前",
+      //             onClick(picker) {
+      //                 const date = new Date();
+      //                 date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);
+      //                 picker.$emit("pick", date);
+      //             }
+      //         }
+      //     ]
+      // },
+      value1: "",
+      value2: "",
+      value3: "",
+      value4: "",
+
+      htmlTitle: "页面导出PDF文件名",
+      select: "",
+      filters: {
+        plate: "",
+        name: ""
+      },
+      //声明公司id
+      unitIds: "",
+      //声明所有节点名
+      nodename: "",
+      //查询后得到的所有数据
+      allnum: [],
+      oprations: [],
+      users: []
+      // listLoading: false,
+    };
+  },
+  created() {
+    // this.jiedianid = this.$route.params.row.id;
+    //   this.jiedianname = this.$route.params.row.nodename;
+    // this.value3="798"
+    // this.value4=this.$route.params.row.coreUpdateTime
+    // console.log(gpsTime)
+  },
+  updated() {},
+  methods: {
+    open1() {
+      this.$message({
+        message: "暂无数据",
+        type: "warning"
+      });
+    },
+    open2() {
+      this.$message({
+        message: "提交成功",
+        type: "success"
+      });
+    },
+
+    getUsers() {
+      this.loading=true;
+      
+      if (this.value1 > this.value2) {
+        this.open2();
+        return;
+      }
+      this.value3 = this.value1;
+      this.value4 = this.value2;
+      this.drawChart();
+    },
+
+    //分页
+    handleSizeChange(val) {
+      // alert(`每页 ${val} 条`);
+      this.size = val;
+      this.jump_info();
+    },
+    handleCurrentChange(val) {
+      this.page = val;
+      this.jump_info();
+    },
+    jump_info() {
+      this.newadds = true;
+      var that=this
+      let para = {
+        size: that.size,
+        page: that.page,
+        startTime: that.value3,
+        endTime: that.value4,
+        vehicleId: that.jiedianid
+      };
+      // alert(this.value3)
+      //    alert(that.value2)
+      //查询的结果
+      history(para).then(res => {
+        this.newall_node = res.msg.data;
+        if (res.code == 1) {
+          this.total = res.msg.total;
+          if (!this.total) {
+            this.open1();
+            return;
+          }
+        } else {
+          this.open1();
+        }
+      });
+      // alert(this.all_node)
+    },
+    delet() {
+      this.newadds = false;
+      this.drawChart();
+    },
+    displayEchart(data) {
+      this.myChart = echarts.init(document.getElementById("echarts"));
+      var tmp1Array = [];
+      var tmp0max = tmp1Array[1];
+      var tmp0min = tmp1Array[1];
+      var hum0max = tmp1Array[1];
+      var hum0min = tmp1Array[1];
+      var timeArray = [];
+      var hum1Array = [];
+      //  console.log("data=",hum2Array);
+      var flag = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].temperature1) {
+          tmp1Array[i] = data[i].temperature1;
+        } else {
+          tmp1Array[i] = "";
+        }
+
+        //湿度1
+        if (data[i].hum) {
+          hum1Array[i] = data[i].hum;
+        } else {
+          hum1Array[i] = "";
+        }
+        timeArray[i] = data[i].gpsTime;
+        // 最大温度
+        if (tmp0max > tmp1Array[i]) {
+          tmp0max = tmp0max;
+        } else {
+          tmp0max = tmp1Array[i];
+        }
+        // 最小温度
+        if (tmp0min < tmp1Array[i]) {
+          tmp0min = tmp0min;
+        } else {
+          tmp0min = tmp1Array[i];
+        }
+        // 最大湿度
+        if (hum0max > hum1Array[i]) {
+          hum0max = hum0max;
+        } else {
+          hum0max = hum1Array[i];
+        }
+        // 最小湿度
+        if (hum0min < hum1Array[i]) {
+          hum0min = hum0min;
+        } else {
+          hum0min = hum1Array[i];
+        }
+      }
+      this.tmp1max = tmp0max;
+      this.tmp1min = tmp0min;
+      this.hum1max = hum0max;
+      this.hum1min = hum0min;
+      var hum1 = {
+        name: "湿度一",
+        type: "line",
+        smooth: true,
+        data: hum1Array,
+        markPoint: {
+          data: [
+            { type: "max", name: "最大值" },
+            { type: "min", name: "最小值" }
+          ]
+        }
+        // ,
+        // markLine: {
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+
+      var tmp1 = {
+        name: "温度一",
+        type: "line",
+        smooth: true,
+        itemStyle: {
+          normal: {
+            color: "#2F89E2",
+            lineStyle: {
+              color: "#2F89E2"
+            }
+          }
+        },
+        data: tmp1Array,
+        markPoint: {
+          data: [
+            { type: "max", name: "最大值" },
+            { type: "min", name: "最小值" }
+          ]
+        }
+        // ,
+        // markLine:{
+        //   data: [{ type: "average", name: "平均值" }]
+        // }
+      };
+
+      const option = {
+        title: {
+          text: "▎趋势图",
+          textStyle: {
+            fontSize: 14
+          }
+        },
+        tooltip: {
+          trigger: "axis"
+        },
+        legend: {
+          data: ["温度一", "湿度一"]
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            saveAsImage: {}
+          }
+        },
+        xAxis: [
+          {
+            type: "category",
+            boundaryGap: false,
+            data: (function() {
+              var list = [];
+              for (var i = 0; i < data.length; i++) {
+                list.push(data[i].gpsTime);
+              }
+              return list;
+            })()
+          }
+        ],
+        yAxis: [
+          {
+            type: "value",
+            name: "（°C）",
+            min: this.tmp1min,
+            max: this.tmp1max,
+
+            axisLabel: {
+              formatter: "{value} "
+            }
+          },
+          {
+            type: "value",
+            name: "（%）",
+            min: 0,
+            max: 100,
+            interval: 20,
+            axisLabel: {
+              formatter: "{value} "
+            }
+          }
+        ],
+
+        series: [tmp1, hum1]
+      };
+      //  console.log(option)
+      this.myChart.setOption(option);
+    },
+    drawChart() {
+      var that = this;
+      this.jiedianid = this.$route.params.row.id;
+      this.jiedianname = this.$route.params.row.nodename;
+
+      console.log(this.$route.params.row);
+      if (this.value3 == "") {
+        this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+        this.value4 = new Date(new Date().getTime());
+      }
+      that.value3 =
+        !that.value3 || that.value3 == ""
+          ? ""
+          : util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+      that.value4 =
+        !that.value4 || that.value4 == ""
+          ? ""
+          : util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+          this.value1=this.value3
+          this.value2=this.value4
+      let para = {
+        size: 99999,
+        page: that.page,
+        startTime: that.value3,
+        endTime: that.value4,
+        vehicleId: that.jiedianid
+      };
+      // alert(this.value3)
+      //    alert(that.value2)
+      //查询的结果
+      
+      history(para).then(res => {
+        
+      this.loading=false;
+     
+        var data = res.msg.data;
+        this.all_node = res.msg.data;
+        if (res.code == 1) {
+          
+          this.total = res.msg.total;
+          if (!this.total) {
+            this.open1();
+            return;
+          }
+          this.displayEchart(data);
+        } else {
+          this.open1();
+        }
+      });
+    },
+    drawCharts() {
+      this.displayEchart();
+    }
+  },
+  mounted() {
+    this.liuHeights = liuHeight;
+    // this.$nextTick(() => {
+    this.drawChart();
+    // });
+  }
+};
+</script>
+<style scoped>
+.jump_info {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  right: 35px;
+  top: 6px;
+  z-index: 99;
+}
+
+.el-col {
+  background: #fff;
+}
+
+.toolbar-bot {
+  text-align: right;
+  margin-top: 10px;
+}
+
+.toolbar {
+  box-shadow: 0 0 6px 0 #dcdfe6;
+}
+
+.el-form-item i img {
+  width: 20px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.el-form-item span {
+  color: #328fea;
+  line-height: 21px;
+  margin-right: 10px;
+}
+
+.el-table {
+  margin-bottom: 80px;
+}
+
+.green {
+  color: green;
+}
+
+.red {
+  color: red;
+}
+
+.newadd {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+
+.content {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  z-index: 999;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.568);
+}
+
+.contenter {
+  position: relative;
+  width: 85%;
+  height: 600px;
+  background: #fff;
+  margin: 40px auto 0;
+}
+
+.footer-fenye {
+  position: absolute;
+  padding: 0 1% 10px 1%;
+  bottom: 0;
+  left: 0;
+  width: 98%;
+  background: #fff;
+  z-index: 100;
+}
+
+.delet {
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  line-height: 50px;
+  position: absolute;
+  right: 28px;
+  top: 0px;
+  font-size: 25px;
+  color: #fff;
+  cursor: pointer;
+}
+</style>

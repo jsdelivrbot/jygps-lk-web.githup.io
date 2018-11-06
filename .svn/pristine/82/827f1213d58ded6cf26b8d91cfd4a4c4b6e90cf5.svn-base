@@ -1,0 +1,691 @@
+<template>
+    <div style="width: 100%;height: 1200px;background: #fff;margin-bottom: 100px;" id="s">
+        <div style="width:100%; height:1200px; overflow:hidden;">
+            <section class="chart-container" style="background:#F3F6FC">
+                <el-row style="margin-bottom: 500px;">
+                    <div v-loading="loading" style="pointer-events: none; width: 90%;height:80%;position:fixed;bottom:10%;right:0;z-index: 99999;"></div>
+                    <div v-for="(item,index) in oprations" :key="index">
+                        <el-col :span="8" style="background: #F3F6FC;overflow:hidden; height: 362px;">
+                            <el-row type="flex" class="row-bg" justify="space-between">
+                                <!-- <div style="width:100%;height:300px;position:absolute;right:0;top:0;z-index:99999;" v-loading=loa></div> -->
+                                <el-col :span="6">
+                                    <div class="grid-content bg-purple chart-head-lt">
+                                        <div class="chart-head-title" :title="item.name+'仓库'">{{item.name}}仓库</div>
+                                        <div class="yuan"></div>
+                                    </div>
+                                </el-col>
+                                <el-col :span="6">
+                                    <div class="grid-content bg-purple-light chart-head-cn">报警（{{num[index]}}）</div>
+                                </el-col>
+                                <el-col :span="6">
+                                    <div class="grid-content bg-purple chart-head-rg" @click="markTS">
+                                        <img src="../../assets/icon/weixing.png" alt="">
+                                        <span>仓库卫星图</span>
+                                    </div>
+                                </el-col>
+                            </el-row>
+                            <div style="width: 100%;" class="all-box">
+                                <el-table :data="newallum[index]" height="307" style="width: 100%;overflow-y:hidden;padding-bottom: 100px;">
+                                    <el-table-column label="节点名称" width="140" :show-overflow-tooltip="true">
+                                        <template slot-scope="scope">
+                                            <span class="blue" v-if="scope.row.levels === 0">{{scope.row.nodename}}</span>
+                                            <span class="red" v-else>{{scope.row.nodename}}</span>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="温度(°C)" width="95">
+                                        <template slot-scope="scope">
+                                            <span class="blue" v-if="scope.row.levels === 0">{{scope.row.tmp1Current}}</span>
+                                            <span class="red" v-else>{{scope.row.tmp1Current}}</span>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="湿度(%)" width="90">
+                                        <template slot-scope="scope">
+                                            <span class="blue" v-if="scope.row.levels === 0">{{scope.row.hum1max}}</span>
+                                            <span class="red" v-else>{{scope.row.hum1max}}</span>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="更新时间" width="125" :show-overflow-tooltip="true">
+                                        <template slot-scope="scope">
+                                            <span class="blue" v-if="scope.row.levels === 0">{{scope.row.tmpUpdateTime}}</span>
+                                            <span class="red" v-else>{{scope.row.tmpUpdateTime}}</span>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="操作" width="95" fixed="right" style="text-align: center">
+                                        <template slot-scope="scope">
+                                            <img src="../../assets/tongji.png" alt="" style="width:20px" @click="clickShwo(scope.$index, scope.row)">
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+                            </div>
+                        </el-col>
+                    </div>
+                    <!-- </div> -->
+                </el-row>
+                <!-- 弹出开始 -->
+                <div class="content" v-if="delets">
+                    <div class="delet" @click="newDelet">X</div>
+                    <!-- <div style="width:100%;height:100%;text-align:center;line-height:700px;font-size:13px;color:#1414;" v-show="showData">暂无数据</div> -->
+                    <div class="echartS" id="main">
+                    </div>
+                </div>
+                <!-- 弹出结束 -->
+                <!-- 卫星图开始 -->
+                <div class="content" v-if="markDelets">
+                    <div class="delet" @click="mark_Delet">X</div>   
+                    <!-- <div id="allmap" ref="allmap"></div> -->
+                    <div style="width:100%;height:100%;text-align:center;line-height:700px;font-size:13px;color:#1414;" v-show="true">该功能正在研发中...</div>
+                    <div class="mark_main" id="mark_main">
+                    </div>
+                </div>
+                <!-- 卫星图结束 -->
+            </section>
+        </div>
+    </div>
+</template>
+<!-- <script src="//webapi.amap.com/maps?v=1.3&key=1f0db36b82f9faab094887faee232b52"></script> -->
+<script>
+    // import AMap from 'AMap';   //在页面中引入高德地图
+    import util from "../../common/js/util";
+    import axios from "axios";
+    import echarts from "echarts";
+    // var map
+    import {
+        getUserListPage,
+        removeUser,
+        batchRemoveUser,
+        editUser,
+        addUser,
+        history,
+        allNode,
+        unitTree,
+        newhistory,
+        exportPdf,
+        getNode,
+        nodeinfo,
+        marks
+    } from "../../api/api";
+    export default {
+        data() {
+            return {
+                inde: 0,
+                newallum: [],
+                loading: true,
+                loa: true,
+                aaaa: true,
+                oprations: [],
+                showData: false,
+                value3: "",
+                value4: "",
+                vehicleId: "",
+                tmp1min: "",
+                tmp1max: "",
+                hum1max: "",
+                hum1min: "",
+                delets: false,
+                markDelets: false,
+                newadds: [],
+                num: [],
+                id: "",
+                allnode: [],
+                allnum: [],
+                chartColumn: null,
+                chartBar: null,
+                chartLine: null,
+                chartPie: null
+            };
+        },
+        created() {
+            this.loading = true
+
+            //   获取所有公司名UnitTree
+
+            allNode().then(data => {
+                    this.loa = true
+                    this.listLoading = false;
+                    if (data.data.code == -1) {
+                        this.$message({
+                            message: msg,
+                            type: "error"
+                        });
+                    } else {
+                        this.$nextTick(() => {
+                            this.loa = false
+                            this.allnode = data.data.msg;
+                        });
+                    }
+                }),
+                this.getnode();
+        },
+        mounted() {
+            this.getUsers();
+        },
+        methods: {
+            loadmap(){
+                
+        const map = new AMap.Map('container', {
+          zoom: 9,
+          center: [116.39, 39.9]
+          
+        });
+       
+      },
+            mark_Delet() {
+                this.markDelets = false;
+            },
+            markTS() {
+                // this.loadmap();     //加载地图和相关组件
+                this.markDelets = true;
+                // let para = {
+                //     unitIds: 1
+                // };
+
+            },
+            clickShwo(index, row) {
+                // alert(row)
+                this.vehicleId = row.id;
+                this.delets = true;
+                console.log(row);
+                this.drawChart();
+            },
+            newDelet() {
+                // alert(1)
+                this.delets = false;
+            },
+            getnode() {
+                let para = {
+                    id: 10000249
+                };
+                getNode(para).then(data => {
+                    console.log(data);
+                    // this.listLoading = false
+                    // if (data.data.code == -1) {
+                    //     this.$message({
+                    //         message: msg,
+                    //         type: "error"
+                    //     });
+                    // } else {
+                    //     this.$nextTick(() => {
+                    //         this.allnode = data.data.msg;
+                    //         console.log(this.allnode)
+                    //     })
+                    // }
+                });
+            },
+            getUsers() {
+
+                this.loading2 = true;
+                unitTree().then(data => {
+                    this.loading2 = true
+                    if (data.data.code == -1) {
+                        this.$message({
+                            message: msg,
+                            type: "error"
+                        });
+                    } else {
+                        this.$nextTick(() => {
+                            this.oprations = data.data.msg;
+                            this.loading = false
+                            console.log(this.oprations);
+                            //  alert(this.oprations[0].id)
+                            for (var i = 0; i < this.oprations.length; i++) {
+                                var that = this;
+                                // that.nodename = that.filters.name;
+                                let para = {
+                                    page: 1,
+                                    size: 20,
+                                    unitIds: this.oprations[i].id,
+                                    nodename: that.nodename
+                                };
+                                nodeinfo(para).then(res => {
+                                    this.loading2 = false
+                                    // this.allnum = res.msg.rows;
+                                    this.newallum.push(res.msg.rows)
+                                    var alllength = res.msg.rows.length
+                                    this.inde = 0
+                                    for (var j = 0; j < alllength; j++) {
+                                        if (res.msg.rows[j].levels > 0) {
+                                            this.inde++;
+                                        }
+                                        // return this.inde
+                                    }
+
+                                    this.num.push(this.inde)
+                                    //   alert(this.inde)
+                                });
+                            }
+                            //查询的结果
+
+                        });
+                    }
+                });
+                this.drawChart();
+
+
+            },
+            displayEchart(data) {
+                // alert(data)
+                this.myChart = echarts.init(document.getElementById("main"));
+                var tmp1Array = [];
+                var tmp0max = tmp1Array[1];
+                var tmp0min = tmp1Array[1];
+                var hum0max = tmp1Array[1];
+                var hum0min = tmp1Array[1];
+                var timeArray = [];
+                var hum1Array = [];
+                //  console.log("data=",hum2Array);
+                var flag = true;
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].temperature1) {
+                        tmp1Array[i] = data[i].temperature1;
+                    } else {
+                        tmp1Array[i] = "";
+                    }
+                    //湿度1
+                    if (data[i].hum) {
+                        hum1Array[i] = data[i].hum;
+                    } else {
+                        hum1Array[i] = "";
+                    }
+                    timeArray[i] = data[i].gpsTime;
+
+                    // 最大温度
+                    if (tmp0max > tmp1Array[i]) {
+                        tmp0max = tmp0max;
+                    } else {
+                        tmp0max = tmp1Array[i];
+                    }
+                    // 最小温度
+                    if (tmp0min < tmp1Array[i]) {
+                        tmp0min = tmp0min;
+                    } else {
+                        tmp0min = tmp1Array[i];
+                    }
+                    // 最大湿度
+                    if (hum0max > hum1Array[i]) {
+                        hum0max = hum0max;
+                    } else {
+                        hum0max = hum1Array[i];
+                    }
+                    // 最小湿度
+                    if (hum0min < hum1Array[i]) {
+                        hum0min = hum0min;
+                    } else {
+                        hum0min = hum1Array[i];
+                    }
+                }
+                this.tmp1max = tmp0max;
+                this.tmp1min = tmp0min;
+                this.hum1max = hum0max;
+                this.hum1min = hum0min;
+                var hum1 = {
+                    name: "湿度一",
+                    type: "line",
+                    data: hum1Array,
+                    itemStyle: {
+                        normal: {
+                            color: "#F9BF66",
+                            lineStyle: {
+                                color: "#F9BF66"
+                            }
+                        }
+                    },
+                    markPoint: {
+                        data: [{
+                                type: "max",
+                                name: "最大值"
+                            },
+                            {
+                                type: "min",
+                                name: "最小值"
+                            }
+                        ]
+                    }
+                };
+
+                var tmp1 = {
+                    name: "温度一",
+                    type: "line",
+                    data: tmp1Array,
+                    itemStyle: {
+                        normal: {
+                            color: "#2F89E2",
+                            lineStyle: {
+                                color: "#2F89E2"
+                            }
+                        }
+                    },
+                    markPoint: {
+                        data: [{
+                                type: "max",
+                                name: "最大值"
+                            },
+                            {
+                                type: "min",
+                                name: "最小值"
+                            }
+                        ]
+                    }
+                    // ,
+                    // markLine:{
+                    //   data: [{ type: "average", name: "平均值" }]
+                    // }
+                };
+                const option = {
+                    title: {
+                        text: "▎趋势图",
+                        textStyle: {
+                            fontSize: 14
+                        }
+                    },
+                    tooltip: {
+                        trigger: "axis"
+                    },
+                    legend: {
+                        data: ["温度一", "湿度一"]
+                    },
+                    toolbox: {
+                        show: true,
+                        feature: {
+                            saveAsImage: {}
+                        }
+                    },
+                    xAxis: [{
+                        type: "category",
+                        boundaryGap: false,
+                        data: (function () {
+                            var list = [];
+                            for (var i = 0; i < data.length; i++) {
+                                list.push(data[i].gpsTime);
+                            }
+                            return list;
+                        })()
+                    }],
+                    yAxis: [{
+                            type: "value",
+                            name: "（°C）",
+                            min: this.tmp1min,
+                            max: this.tmp1max,
+                            interval: 2,
+                            axisLabel: {
+                                formatter: "{value} "
+                            }
+                        },
+                        {
+                            type: "value",
+                            name: "（%）",
+                            min: 0,
+                            max: 100,
+                            interval: 20,
+                            axisLabel: {
+                                formatter: "{value} "
+                            }
+                        }
+                    ],
+
+                    series: [tmp1, hum1]
+                };
+                this.myChart.setOption(option);
+            },
+            drawChart() {
+                var that = this;
+                if (this.value3 == "") {
+                    this.value3 = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+
+                    this.value4 = new Date(new Date().getTime());
+                }
+                that.value3 = !that.value3 || that.value3 == "" ?
+                    "" :
+                    util.formatDate.format(new Date(that.value3), "yyyy-MM-dd hh:mm");
+                that.value4 = !that.value4 || that.value4 == "" ?
+                    "" :
+                    util.formatDate.format(new Date(that.value4), "yyyy-MM-dd hh:mm");
+                let para = {
+                    size: 99,
+                    page: 1,
+                    startTime: this.value3,
+                    endTime: this.value4,
+                    vehicleId: this.vehicleId
+                };
+                //查询的结果
+                this.listLoading = true;
+                history(para).then(res => {
+                    console.log(res);
+                    this.listLoading = false;
+                    var data = res.msg.data;
+                    this.all_node = res.msg.data;
+                    if (res.msg.total == 0) {
+                        this.showData = true;
+                    }
+                    if (res.code == 1) {
+                        this.total = res.msg.total;
+                        if (!this.total) {
+                            // this.open1();
+                            // return;
+                        }
+                        this.displayEchart(data);
+                    } else {
+                        //   this.open1()
+                    }
+                });
+            },
+            drawCharts() {
+                this.displayEchart();
+            }
+        },
+
+    };
+</script>
+<style>
+    .all-box {
+        padding: 0 15px 0 0;
+        border: none;
+    }
+
+    .all-box .el-table__body-wrapper {
+        height: 240px;
+        /* padding-bottom: 20px; */
+    }
+
+    .all-box .el-table th>.cell {
+        background-color: #fff;
+        line-height: 54px;
+    }
+
+    .all-box .el-table {
+        overflow-y: hidden;
+    }
+
+    .el-table th.is-leaf {
+        border-bottom: none;
+    }
+
+    .all-box head {
+        margin: 0;
+    }
+
+    .all-box .el-table th.is-leaf {
+        background: #fff;
+        border: none;
+    }
+
+    .all-box .el-table td {
+        border: none;
+    }
+
+    .all-box .el-table {
+        border: none;
+    }
+
+    .all-box .el-table th>.cell {
+        width: 100px;
+    }
+
+    .all-box .gutter {
+        width: 0;
+        background: #fff;
+    }
+
+    .all-box .el-table {
+        overflow-y: hidden;
+    }
+
+    .all-box .el-table__body {
+        width: 800px;
+    }
+</style>
+<style scoped>
+    /*  */
+
+    .el-row {
+        /* margin-bottom: 20px */
+    }
+
+    /* .el-row last-child {
+      margin-bottom: 0;
+    } */
+
+    .el-col {
+        /* border-radius: 4px; */
+    }
+
+    .bg-purple-dark {
+        /* background: #99a9bf; */
+    }
+
+    .bg-purple {
+        /* background: #d3dce6; */
+    }
+
+    .bg-purple-light {
+        /* background: #e5e9f2; */
+    }
+
+    .grid-content {
+        border-radius: 4px;
+        min-height: 31px;
+    }
+
+    .row-bg {
+        /* padding: 10px 0; */
+        background-color: #fff;
+    }
+
+    /*  */
+
+    .chart-container {
+        width: 100%;
+        float: left;
+        position: relative;
+        height: 100%;
+        overflow-y: scroll;
+    }
+
+    .chart-container .el-col {
+        margin: 0;
+        padding: 10px 0 10px 10px;
+    }
+
+    .content {
+        width: 90%;
+        height: 91%;
+        box-sizing: border-box;
+        /* border: 1px solid black; */
+        position: fixed;
+        bottom: 0px;
+        right: 0px;
+        z-index: 999;
+        background: white;
+    }
+
+    /*.chart div {
+        height: 400px;
+        float: left;
+    }*/
+
+    .el-col {
+        padding: 30px 0 30px 20px;
+    }
+
+    .lt {
+        float: left;
+    }
+
+    .rg {
+        float: right;
+    }
+
+    .cn {
+        margin: 0 auto;
+    }
+
+    .chart-head {
+        width: 100%;
+        height: 31px;
+        position: relative;
+        /* position: absolute; */
+        top: 0;
+        left: 0;
+        background: #fff;
+    }
+
+    .chart-head-rg {
+        font-size: 12px;
+        /* position: absolute; */
+        /* right: 53px;
+        top: 19px; */
+        color: #019fe7;
+        cursor: pointer;
+    }
+
+    .chart-head-cn {
+        /* position: absolute; */
+        /* left: 200px; */
+        color: red;
+        /* top: 15px; */
+    }
+
+    .chart-head-title {
+        margin-left: 4px;
+        width: 90px;
+        line-height: 31px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 12px;
+    }
+
+    .chart-head-lt {
+        margin-left: -9px;
+        color: aliceblue;
+        background: #019fe7;
+        /* padding: 5px; */
+        /* /* position: relative; */
+        height: 15px;
+        border-radius: 0 20px 20px 0;
+    }
+
+    .red {
+        color: red;
+    }
+
+    .blue {
+        color: black;
+    }
+
+    .delet {
+        width: 60px;
+        height: 60px;
+        cursor: pointer;
+        /* background: red; */
+        float: right;
+        text-align: center;
+        line-height: 60px;
+    }
+
+    .echartS {
+        margin: 60px 0 0 60px;
+        width: 90%;
+        height: 560px;
+        /* background: black; */
+    }
+</style>

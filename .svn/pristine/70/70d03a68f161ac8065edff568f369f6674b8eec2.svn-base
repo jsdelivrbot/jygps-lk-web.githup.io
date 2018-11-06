@@ -1,0 +1,414 @@
+<template>
+  <div class="content-container" style="padding:0 10px;margin-top:10px;">
+    <section>
+      <!--查询工具条-->
+      <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+        <el-form :inline="true" :model="filters" class="demo-form-inline">
+          <el-form-item label="冷库列表">
+            <el-select v-model="select" filterable placeholder="请选择" @change="select_node">
+              <el-option v-for="item in oprations" :key="item.index" :label="item.name" :value="item.id" ref="dataInfo">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="设备名称">
+            <el-select v-model="filters.name" filterable placeholder="请选择设备名称" style="width:149px;">
+              <el-option v-for="item in allnums" :key="item.nodename" :label="item.nodename" :value="item.nodename" ref="dataInfo">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <!-- <el-form-item label="节点名称">
+            <el-input v-model="filters.name" placeholder="输入节点名称"></el-input>
+          </el-form-item> -->
+          <el-form-item>
+            <!-- 查询 -->
+            <el-button type="primary" @click="getUsers">查询</el-button>
+          </el-form-item>
+          <!-- <el-form-item style="float:right;cursor: pointer;">
+            <i>
+              <img src="../../assets/icon/pdf.png">
+            </i>
+            <span type="primary" @click="getPdf()">Pdf</span>
+          </el-form-item> -->
+          <el-form-item style="float:right;cursor: pointer;" v-loading="loading2">
+            <i>
+              <img src="../../assets/icon/excel.png" @click="exportTable()">
+            </i>
+            <span type="primary" @click="exportTable()">Excel</span>
+          </el-form-item>
+        </el-form>
+      </el-col>
+      <!-- 列表-新加了一个id用于PDF导出 -->
+      <el-table class="row" id="pdfDom" v-loading="loading" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading"
+        element-loading-background="rgba(0, 0, 0, 0.8)" :data="allnum" width="100%" :height="windowHeigh" highlight-current-row
+        style="border-right:solid 1px #dfe6ec" @selection-change="selsChange">
+        <!-- 选择的按钮 多选按钮 -->
+        <!--   <el-table-column type="selection" width="55" fixed="left">
+        </el-table-column> -->
+        <!--<el-table-column type="index" label="序号" width="80">
+      </el-table-column>-->
+        <el-table-column prop="nodename" label="设备名称" width="150" fixed="left" :show-overflow-tooltip="true">
+          <!-- <div slot-scope>{{allnum.nodename}}</div> -->
+        </el-table-column>
+        <el-table-column prop="tmpUpdateTime" label="更新时间" width="180" sortable>
+        </el-table-column>
+        <el-table-column prop="tmp1Current" label="温度（℃）" width="120">
+        </el-table-column>
+        <el-table-column label="湿度（%）" width="100">
+          <template slot-scope="scope">
+            <span>{{scope.row.humidity>100?"":scope.row.humidity}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" min-width="70">
+          <template slot-scope="scope">
+            <span class="green" v-if="scope.row.timeoutflag === 0">在线</span>
+            <span v-else>离线</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="报警状态" min-width="100" :show-overflow-tooltip="true">
+          <template slot-scope="scope">
+            <span v-if="scope.row.levels === 0">设备正常</span>
+            <span class="red" v-else>正在报警</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="unitName" label="所属冷库" min-width="120" :show-overflow-tooltip="true">
+        </el-table-column>
+        <el-table-column prop="voltageCurrent" label="电压" min-width="70">
+        </el-table-column>
+        <el-table-column prop="signalStrength" label="GPRS信号强度" min-width="140">
+        </el-table-column>
+        <el-table-column prop="waveSignalStrength" label="短波信号强度" min-width="130">
+        </el-table-column>
+        <el-table-column prop="coreUpdateTime" label="主机更新时间" min-width="180">
+        </el-table-column>
+        <el-table-column prop="corePowerStatus" label="主机电源状态" min-width="180">
+        </el-table-column>
+        <el-table-column prop="installpos" label="安装位置" min-width="180">
+        </el-table-column>
+        <el-table-column label="趋势线" width="80" fixed="right" size="small">
+          <template slot-scope="scope">
+            <span style="color: #328fea; display: inline-block; cursor: pointer; " @click="clickShwo(scope.$index, scope.row)"> 趋势线 </span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="footer-bottom">
+        <!--分页-->
+        <el-col :span="24" class="toolbar-bot">
+          <span class="demonstration" style="float: left; margin-top: 10px;">共:{{total}}条</span>
+          <el-pagination style="cursor:pointer" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage1"
+            :page-size="size" layout="prev, pager, next, jumper" :total="total">
+          </el-pagination>
+        </el-col>
+      </div>
+    </section>
+    <el-dialog title="提示" :visible.sync="popShowInfo" width="30%" center>
+      <div>
+        <span>需要注意的是内容是默认不居中的</span>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+<script>
+  var liuHeight = document.documentElement.clientHeight - 220;
+  import util from "../../common/js/util";
+  // 引入PDF导出功能
+  import htmlToPdf from "../../components/htmlToPdf/htmlToPdf";
+  // import trendss from "./trendss";
+  import {
+    getUserListPage,
+    removeUser,
+    batchRemoveUser,
+    editUser,
+    addUser,
+    allNode,
+    unitTree,
+    nodeinfo,
+    equipment
+  } from "../../api/api";
+  export default {
+    data() {
+      return {
+        loading2: false,
+        allnums: "",
+        loading: false,
+        // 趋势图传的节点id
+        // nodeid: "11",
+        htmlTitle: "页面导出PDF文件名",
+        select: "",
+        filters: {
+          plate: "",
+          name: ""
+        },
+        windowHeigh: "",
+        //声明公司id
+        unitIds: "",
+        //声明所有节点名
+        nodename: "",
+        //查询后得到的所有数据
+        allnum: [],
+        oprations: [],
+        users: [],
+        currentPage1: 1,
+        total: 0,
+        page: 1,
+        size: 20,
+        listLoading: false,
+        sels: [], //列表选中列
+        popShowInfo: false
+      };
+    },
+    //加载之前调用
+
+    methods: {
+      select_node() {
+        // alert(1)
+        this.filters.name = "";
+        this.getUserst();
+      },
+      getUserst() {
+        // alert(this.oprations[0].id)
+        var that = this;
+        let para = {
+          page: this.page,
+          size: this.size,
+          unitIds: that.select
+        };
+        console.log(para);
+        this.listLoading = true;
+        //查询的结果
+        equipment(para).then(res => {
+          this.allnums = res.data.msg.rows;
+          // this.total = res.data.msg.total;
+          console.log(res.data.msg.rows);
+          this.listLoading = false;
+        });
+      },
+      // excel导出
+      exportTable() {
+        this.loading2 = true;
+        setTimeout(() => {
+          this.loading2 = false;
+        }, 3000);
+        window.location.href =
+          "http://114.55.138.209:8091/jygpsTmp/sysnodeinfo/exportExcel?unitIds=" +
+          this.select +
+          "&nodename=" +
+          this.filters.name;
+      },
+      // excel导出结束
+      handleSizeChange(val) {
+        // alert(`每页 ${val} 条`);
+        this.size = val;
+        this.getUsers();
+      },
+      handleCurrentChange(val) {
+        this.page = val;
+        this.getUsers();
+      },
+      //跳转到趋势图
+      clickShwo(index, row) {
+        this.row = row;
+        // this.nodeid = row.id;
+        this.$router.push({
+          name: "trendss",
+          params: {
+            row: row
+          }
+        });
+      },
+      //公司列表查询
+      getUsers(id) {
+        var that = this;
+        that.nodename = that.filters.name;
+        // that.select=this.oprations[0].id
+        let para = {
+          page: this.page,
+          size: this.size,
+          unitIds: that.select,
+          nodename: that.nodename
+        };
+        //查询的结果
+        nodeinfo(para).then(res => {
+          this.loading = false;
+          this.allnum = res.msg.rows;
+          this.total = res.msg.total;
+          console.log(this.allnum);
+
+          // console.log(this.allnum);
+        });
+      }
+    },
+    created: function () {
+       
+      this.windowHeigh = liuHeight;
+      
+      allNode().then(data => {
+        
+        if (data.data.code == -1) {
+          this.$message({
+            message: msg,
+            type: "error"
+          });
+        } else {
+          this.allnode = data.data.msg;
+          console.log(this.allnode);
+        }
+      });
+
+      this.intervalid1 = setInterval(() => {
+        
+        this.loading = true;
+        this.getUsers();
+      }, 30000);
+      // alert(this.select)
+    },
+    beforeDestroy() {
+      clearInterval(this.intervalid1);
+    },
+    mounted() {
+      
+      //   获取所有公司名UnitTree
+      unitTree().then(data => {
+        
+        if (data.data.code == -1) {
+          this.$message({
+            message: msg,
+            type: "error"
+          });
+        } else {
+          this.$nextTick(() => {
+            this.oprations = data.data.msg;
+            this.select = data.data.msg[0].id;
+          });
+        }
+      });
+     
+      // this.select_node()
+      // setTimeout(function(){
+      //   this.getUsers();
+      //   alert(1)
+      //   // this.listLoading=true
+      // },1000)
+
+      this.getUsers();
+    }
+  };
+</script>
+<style>
+  .el-table__fixed {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    overflow-x: hidden !important;
+  }
+
+  .el-table__fixed-right {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    overflow-x: hidden !important;
+  }
+  .el-select-dropdown{
+    min-width:150px !important;
+  }
+  .el-date-editor.el-input {
+    width: 150px;
+}
+.el-form--inline .el-form-item{
+  margin-right:0px;
+}
+  .el-input{
+    width:150px;
+  }
+  .el-input__inner {
+    /* width:150px; */
+    height: 30px;
+    font-size: 13px;
+  }
+
+  .el-button {
+    padding: 7px 15px;
+    font-size: 13px;
+  }
+
+  .el-table .cell,
+  .el-table th {
+    font-size: 13px;
+  }
+
+  .el-form-item__label {
+    font-size: 13px;
+  }
+
+  .el-dialog__header {
+    background: #e4eafa;
+    padding: 12px 20px;
+  }
+
+  .el-dialog {
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .el-dialog__title {
+    color: #606266;
+    font-weight: normal;
+    font-size: 14px;
+  }
+</style>
+<style scoped>
+  .el-col {
+    background: #fff;
+  }
+
+  .toolbar-bot {
+    text-align: right;
+    margin-top: 10px;
+  }
+
+  .toolbar {
+    box-shadow: 0 0 6px 0 #dcdfe6;
+  }
+
+  .el-form-item i img {
+    width: 20px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .el-form-item span {
+    color: #328fea;
+    line-height: 21px;
+    margin-right: 10px;
+  }
+
+  .el-table {
+    margin-bottom: 80px;
+  }
+
+  .footer-bottom {
+    position: fixed;
+    padding: 0 0 10px 0;
+    bottom: 0;
+    left: 224px;
+    width: 81%;
+    background: #fff;
+    z-index: 100;
+  }
+
+  .green {
+    color: green;
+  }
+
+  .red {
+    color: red;
+  }
+</style>

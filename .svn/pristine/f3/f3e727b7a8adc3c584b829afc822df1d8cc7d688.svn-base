@@ -1,0 +1,1406 @@
+<template>
+  <div style="padding:0 10px;margin-top:10px;">
+    <el-button @click="open1" v-show="false">消息</el-button>
+    <el-button @click="open2" v-show="false">消息</el-button>
+    <el-button @click="open3" v-show="false">消息</el-button>
+    <el-button @click="open4" v-show="false">消息</el-button>
+    <el-button @click="open5" v-show="false">消息</el-button>
+    <el-button @click="open6" v-show="false">消息</el-button>
+    <el-button @click="open7" v-show="false">消息</el-button>
+    <el-button @click="open8" v-show="false">消息</el-button>
+    <el-button @click="open9" v-show="false">消息</el-button>
+    <el-button @click="open10" v-show="false">消息</el-button>
+    <el-button @click="open11" v-show="false">消息</el-button>
+    <el-button @click="open12" v-show="false">消息</el-button>
+    <el-button @click="open13" v-show="false">消息</el-button>
+    <el-button @click="open20" v-show="false">消息</el-button>
+    <section>
+      <!--头部功能栏-->
+      <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+        <el-form :inline="true" :model="filters">
+          <el-form-item label="冷库列表">
+            <el-select v-model="select" filterable @change="select_node" placeholder="请选择" style="width:200px;">
+              <el-option v-for="item in oprations" :key="item.index" :label="item.name" :value="item.id" ref="dataInfo">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="设备名称" style="margin-left:-3%;">
+            <el-select v-model="filters.name" filterable placeholder="请选择设备名称" style="width:150px;">
+              <el-option v-for="item in allnums" :key="item.nodename" :label="item.nodename" :value="item.nodename" ref="dataInfo">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <!-- <el-form-item label="设备名称">
+            <el-input v-model="filters.name" placeholder="请输入设备名称" style="width:200px;" @keyup.enter.native="getUsers"></el-input>
+          </el-form-item> -->
+          <el-form-item>
+            <el-button type="primary" v-on:click="getUsers">查询</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleAdd">报警设置</el-button>
+          </el-form-item>
+
+          <el-form-item style="float:right;cursor: pointer;">
+            <i>
+              <img src="../../assets/icon/excel.png" @click="exportTable()">
+            </i>
+            <a style="color:#328fea;text-decoration:none;" @click="exportTable()">Excel</a>
+          </el-form-item>
+        </el-form>
+      </el-col>
+      <!--表格列表-->
+      <el-table :data="allnum" highlight-current-row :height="windowHeigh" @click="toggleSelection" v-loading="listLoading" style="border-right:solid 1px #dfe6ec"
+        @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" label="全选/取消" :selectable='checkboxInit'>
+        </el-table-column>
+        <el-table-column prop="nodename" label="设备名称" width="220">
+        </el-table-column>
+        <el-table-column prop="fnum" label="设备编号" width="300">
+        </el-table-column>
+        <el-table-column prop="unitName" label="所属单位" min-width="380" :show-overflow-tooltip="true">
+        </el-table-column>
+        <el-table-column label="操作" width="75" fixed="right">
+          <template scope="scope">
+            <span class="font-color" style="color: #328fea; display: inline-block; cursor: pointer;" size="small" @click="handleEdit(scope.$index, scope.row)">编辑</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <!--报警设置界面-->
+      <el-dialog :title="title" v-model="addFormVisible" :close-on-click-modal="false" :show-close="false" class="waring">
+        <!-- <el-col style="width:30px;height:30px;text-align:center; background:red;float:right;margin-top:-100px;font-size: 16px;
+            font-weight: 700; font-weight:normal;color: #a1a9bc;cursor:pointer"> -->
+        <div @click="closeShow" style="width:30px;height:30px;text-align:center; background:none;position: absolute;right: 10px;top:10px;font-size: 16px;
+        font-weight: 700; font-weight:normal;color: #a1a9bc;cursor:pointer">ㄨ</div>
+      <!-- </el-col> -->
+      <!-- <div style="position: absolute;top: 0px">2323</div> -->
+        <el-form :model="addForm" label-width="80px" :rules="rules2" ref="addForm">
+            
+          <el-row>
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark blue">阀值设置</div>
+            </el-col>
+            
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="12">
+              <div class="grid-content bg-purple">
+                <div class="title-color">温度阀值</div>
+                <el-form-item prop="tmp1min" style="float: left;margin-left:-80px;">
+                  <el-input type="tmp1min" class="tmp1min" max-lenght="4" placeholder="最小值" style="width:60px;" v-model.number="addForm.tmp1min"
+                    auto-complete="off"></el-input>
+                </el-form-item>
+                <span class="title-span">-</span>
+                <el-form-item prop="tmp1max" style="float: left;margin-left:-80px;">
+                  <el-input type="tmp1max" max-lenght="4" placeholder="最大值" style="width:60px;" v-model.number="addForm.tmp1max" auto-complete="off"></el-input>
+                  <span style="color:#BFCBD9">℃</span>
+                </el-form-item>
+              </div>
+            </el-col>
+            <el-col :span="12" style="overflow: hidden;">
+              <div class="grid-content bg-purple-light">
+                <div class="title-color">湿度阀值</div>
+                <el-form-item prop="hum1min" style="float: left;margin-left:-80px;">
+                  <el-input type="hum1min" max-lenght="4" placeholder="最小值" style="width:60px;" v-model.number="addForm.hum1min" auto-complete="off"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="hum1min" placeholder="最小值" controls-position="right" @change="handleChange" :min="1" :max="10" style="width:60px; float: left;"></el-input> -->
+                <span class="title-span">-</span>
+                <el-form-item prop="hum1max" style="float: left;margin-left:-80px;">
+                  <el-input type="hum1max" max-lenght="4" placeholder="最大值" style="width:60px;" v-model.number="addForm.hum1max" auto-complete="off"></el-input>
+                  <span style="color:#BFCBD9;">%</span>
+                </el-form-item>
+                <!-- <el-input v-model="hum1max" placeholder="最大值" type="" style="width:60px; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark blue">升级报警间隔</div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="8">
+              <div class="grid-content bg-purple">
+                <div class="title-color">一级到二级</div>
+                <el-form-item prop="level2NextTime" style="float: left;margin-left:-80px;">
+                    <el-input type="level2NextTime" max-lenght="4" style="width:50px;" v-model.number="addForm.level2NextTime" auto-complete="off"></el-input>
+                </el-form-item>
+                <div class="title-fen">分钟</div>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="grid-content bg-purple-light">
+                <div class="title-color">二级到三级</div>
+                <el-form-item prop="level3NextTime" style="float: left;margin-left:-80px;">
+                    <el-input type="level3NextTime" max-lenght="4" style="width:50px;" v-model.number="addForm.level3NextTime" auto-complete="off"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level3NextTime" auto-complete="off" style="width:40px; float: left;"></el-input> -->
+                <div class="title-fen">分钟</div>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="grid-content bg-purple"></div>
+              <div class="title-color">三级到四级</div>
+              <el-form-item prop="level4NextTime" style="float: left;margin-left:-80px;">
+                  <el-input type="level4NextTime" max-lenght="4" style="width:50px;" v-model.number="addForm.level4NextTime" auto-complete="off"></el-input>
+              </el-form-item>
+              <!-- <el-input v-model="level4NextTime" auto-complete="off" style="width:40px; float: left;"></el-input> -->
+              <div class="title-fen">分钟</div>
+            </el-col>
+          </el-row>
+          <!-- 邮件 -->
+          <div style="height:20px; width:100%;"></div>
+          <el-row>
+            <el-col :span="12">
+              <div class="grid-content bg-purple blue">邮件(多个联系人用英文","隔开)</div>
+            </el-col>
+            <el-col :span="12">
+              <div class="grid-content bg-purple-light">
+                <span style="float: right; margin-right: 20%;">邮件免费</span>
+                <div class="radius-mg">?</div>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">一级联系人
+                </div>
+                <el-form-item prop="level1Emails" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level1Emails" style="width:100%;"></el-input>
+                </el-form-item>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">二级联系人</div>
+                <el-form-item prop="level2Emails" :rules="[
+                   
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level2Emails" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level2Emails" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">三级联系人</div>
+                <el-form-item prop="level3Emails" :rules="[
+                    
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level3Emails" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level3Emails" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">四级联系人</div>
+                <el-form-item prop="level4Emails" :rules="[
+                   
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level4Emails" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level4Emails" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <!-- 恢复联系人邮件 -->
+          <!-- <div style="height:20px; width:100%;"></div>
+          <el-row>
+            <el-col :span="12">
+              <div class="grid-content bg-purple blue">恢复联系人邮件(多个联系人用英文","隔开)</div>
+            </el-col>
+            <el-col :span="12">
+              <div class="grid-content bg-purple-light">
+                <span style="float: right; margin-right: 20%;">邮件免费</span>
+                <div class="radius-mg">?</div>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">恢复一级联系人
+                </div>
+                <el-form-item prop="level1Emails" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level1Emails" style="width:100%;"></el-input>
+                </el-form-item>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">恢复二级联系人</div>
+                <el-form-item prop="level2Emails" :rules="[
+                   
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level2Emails" style="width:100%;"></el-input>
+                </el-form-item>
+               
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">恢复三级联系人</div>
+                <el-form-item prop="level3Emails" :rules="[
+                    
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level3Emails" style="width:100%;"></el-input>
+                </el-form-item>
+              
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">恢复四级联系人</div>
+                <el-form-item prop="level4Emails" :rules="[
+                   
+                  ]" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level4Emails" style="width:100%;"></el-input>
+                </el-form-item>
+                
+              </div>
+            </el-col>
+          </el-row> -->
+          <!-- 短信 -->
+          <div style="height:20px; width:100%;"></div>
+          <el-row>
+            <el-col :span="12">
+              <div class="grid-content bg-purple blue">短信(多个联系人用英文","隔开)</div>
+            </el-col>
+            <el-col :span="12">
+              <div class="grid-content bg-purple-light">
+                <span style="float: right; margin-right: 20%;">短信收费</span>
+                <div class="radius-mg">?</div>
+              </div>
+            </el-col>
+          </el-row>
+
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">一级联系人
+                </div>
+                <el-form-item prop="level1Mobiles" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level1Mobiles" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level1Mobiles" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">二级联系人</div>
+                <el-form-item prop="level2Mobiles" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level2Mobiles" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level2Mobiles" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">三级联系人</div>
+                <el-form-item prop="level3Mobiles" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level3Mobiles" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level3Mobiles" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">四级联系人</div>
+                <el-form-item prop="level4Mobiles" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                  <el-input v-model="addForm.level4Mobiles" style="width:100%;"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level4Mobiles" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <!-- 微信 -->
+          <div style="height:20px; width:100%;"></div>
+          <el-row>
+            <el-col :span="12">
+              <div class="grid-content bg-purple blue">微信(多个联系人用英文","隔开)</div>
+            </el-col>
+            <el-col :span="12">
+              <div class="grid-content bg-purple-light">
+                <span style="float: right; margin-right: 20%;">微信收费</span>
+                <div class="radius-mg">?</div>
+              </div>
+            </el-col>
+          </el-row>
+
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">一级联系人
+                </div>
+                <el-form-item prop="level1WeiXin" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;">
+                    <el-input v-model="addForm.level1WeiXin" style="width:100%;"></el-input>
+                </el-form-item>
+                
+                <!-- <el-input v-model="level1WeiXin" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">二级联系人</div>
+                <el-form-item prop="level2WeiXin" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;" :rules="[
+                      
+                    ]">
+                  <el-input type="level2WeiXin" style="width:100%;" v-model="addForm.level2WeiXin" auto-complete="off"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level2WeiXin" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">三级联系人</div>
+                <el-form-item prop="level3WeiXin" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;" :rules="[
+                      
+                    ]">
+                  <el-input type="level3WeiXin" style="width:100%;" v-model="addForm.level3WeiXin" auto-complete="off"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level3WeiXin" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="jian-ge">
+            <el-col :span="24">
+              <div class="grid-content bg-purple-dark">
+                <div class="title-color">四级联系人</div>
+                <el-form-item prop="level4WeiXin" style="width:90%; float: left;margin-left:-80px;margin-bottom: 5px;" :rules="[
+                      
+                    ]">
+                  <el-input type="level4WeiXin" style="width:100%;" v-model="addForm.level4WeiXin" auto-complete="off"></el-input>
+                </el-form-item>
+                <!-- <el-input v-model="level4WeiXin" auto-complete="off" style="width:80%; float: left;"></el-input> -->
+              </div>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click.native="addFormVisible = false" @click="clecl">取消</el-button>
+          <el-button type="primary" :loading="addLoading" @click="addSubmit">提交</el-button>
+        </div>
+      </el-dialog>
+    </section>
+    <el-footer class="footer-bottom">
+      <!--工具条-->
+      <el-col :span="24" class="toolbar-bot">
+        <span class="demonstration" style="float: left; margin-top: 10px;">共:{{total}}条</span>
+        <el-pagination style="cursor:pointer" @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage1"
+          :page-size="size" layout="prev, pager, next, jumper" :total="total">
+        </el-pagination>
+      </el-col>
+    </el-footer>
+  </div>
+</template>
+<script>
+  // 获取浏览器可视窗口高度
+  var liuHeight = document.documentElement.clientHeight - 220;
+  import htmlToPdf from "../../components/htmlToPdf/htmlToPdf";
+  // 格式化时间
+  import util from "../../common/js/util";
+  import {
+    getUserListPage,
+    removeUser,
+    batchRemoveUser,
+    editUser,
+    addUser,
+    unitTree,
+    equipment,
+    saveWarnBatch,
+    getWarnData
+  } from "../../api/api";
+  export default {
+    inject: ["reload"],
+    data() {
+      var Tmp1max = "";
+      var Tmp1min = "";
+      var checkTmp1min = (rule, value, callback) => {
+        Tmp1max = value;
+        // if (value === "") {
+        //   return callback(new Error("温度不能为空"));
+        // }
+        setTimeout(() => {
+          if (!Number.isInteger(value)) {
+            callback(new Error("请输入数字值"));
+          } else {
+            if (Tmp1min === "") {
+              callback();
+            } else {
+              if (value > Tmp1min) {
+                callback(new Error("要小于最大值"));
+              } else {
+                callback();
+              }
+            }
+          }
+        }, 1000);
+      };
+      var checkTmp1max = (rule, value, callback) => {
+        Tmp1min = value;
+        console.log(Tmp1max);
+        // if (value === "") {
+        //   return callback(new Error("温度不能为空"));
+        // }
+        setTimeout(() => {
+          if (!Number.isInteger(value)) {
+            callback(new Error("请输入数字值"));
+          } else {
+            if (Tmp1max === "") {
+              callback();
+            } else {
+              if (value < Tmp1max) {
+                callback(new Error("要大于最小值"));
+              } else {
+                callback();
+              }
+            }
+          }
+        }, 1000);
+      };
+      var Hum1min = "";
+      var Hum1max = "";
+      var checkHum1min = (rule, value, callback) => {
+        Hum1min = value;
+        // if (value === "") {
+        //   return callback(new Error("湿度不能为空"));
+        // }
+        setTimeout(() => {
+          if (!Number.isInteger(value)) {
+            callback(new Error("请输入数字值"));
+          } else {
+            if (value < 0) {
+              callback(new Error("必须大于0"));
+            } else {
+              if (Hum1max === "") {
+                callback();
+              } else {
+                if (value > Hum1max) {
+                  callback(new Error("要小于最大值"));
+                } else {
+                  callback();
+                }
+              }
+            }
+          }
+        }, 1000);
+      };
+      var checkTHum1max = (rule, value, callback) => {
+        Hum1max = value;
+        // if (value === "") {
+        //   return callback(new Error("湿度不能为空"));
+        // }
+        setTimeout(() => {
+          if (!Number.isInteger(value)) {
+            callback(new Error("请输入数字值"));
+          } else {
+            if (value < Hum1min) {
+              callback(new Error("要大于最小值"));
+            } else {
+              callback();
+            }
+          }
+        }, 1000);
+      };
+      var checkLevel2NextTime = (rule, value, callback) => {
+       
+        // if (value === "") {
+        //   return callback(new Error("不能为空"));
+        // }
+        setTimeout(() => {
+          if (!Number.isInteger(value)) {
+            callback(new Error("请输入数字值"));
+          } else {
+            
+              callback();
+            
+          }
+        }, 1000);
+      };
+      var checkLevel3NextTime = (rule, value, callback) => {
+       
+        // if (value === "") {
+        //   return callback(new Error("不能为空"));
+        // }
+        setTimeout(() => {
+          if (!Number.isInteger(value)) {
+            callback(new Error("请输入数字值"));
+          } else {
+            
+              callback();
+            
+          }
+        }, 1000);
+      };
+      var checkLevel4NextTime = (rule, value, callback) => {
+        
+        // if (value === "") {
+        //   return callback(new Error("不能为空"));
+        // }
+        setTimeout(() => {
+          if (!Number.isInteger(value)) {
+            callback(new Error("请输入数字值"));
+          } else {
+            
+              callback();
+            
+          }
+        }, 1000);
+      };
+      return {
+        rerror:'12',
+        spanShow: false,
+        // 正则
+        addForm: {
+          tmp1max: "",
+          tmp1min: "",
+          hum1max: "",
+          hum1min: "",
+          level1Emails: "",
+          level1Emai2s: "",
+          level1Emai3s: "",
+          level1Emai4s: "",
+          level1Mobiles: "",
+          level1Mobi2es: "",
+          level1Mobi3es: "",
+          level1Mobi4es: "",
+          level1NextTime: "",
+          level2NextTime: "",
+          level3NextTime: "",
+          level4NextTime: "",
+          level1WeiXin: "",
+          level2WeiXin: "",
+          level3WeiXin: "",
+          level4WeiXin: ""
+        },
+        rules2: {
+          tmp1max: [{
+            validator: checkTmp1max,
+            trigger: "blur"
+          }],
+          level2NextTime: [{
+            validator: checkLevel2NextTime,
+            trigger: "blur"
+          }],
+          level3NextTime: [{
+            validator: checkLevel3NextTime,
+            trigger: "blur"
+          }],
+          level4NextTime: [{
+            validator: checkLevel4NextTime,
+            trigger: "blur"
+          }],
+          tmp1min: [{
+            validator: checkTmp1min,
+            trigger: "blur"
+          }],
+          hum1max: [{
+            validator: checkTHum1max,
+            trigger: "blur"
+          }],
+          hum1min: [{
+            validator: checkHum1min,
+            trigger: "blur"
+          }],
+        },
+        // 报警设置
+        num: "",
+        currentPage1: 1,
+        total: 0,
+        page: 1,
+        size: 20,
+        nodeIds: [],
+        // tmp1max: "",
+        // tmp1min: "",
+        // hum1max: "",
+        // hum1min: "",
+        // level2NextTime: "",
+        // level3NextTime: "",
+        // level4NextTime: "",
+        // level1Emails: "",
+        // level2Emails: "",
+        // level3Emails: "",
+        // level4Emails: "",
+        // level1Mobiles: "",
+        // level2Mobiles: "",
+        // level3Mobiles: "",
+        // level4Mobiles: "",
+        // level1WeiXin: "",
+        // level2WeiXin: "",
+        // level3WeiXin: "",
+        // level4WeiXin: "",
+        windowHeigh: "",
+        // 报警设置结束
+        checkboxInit: "",
+        multipleSelection: [],
+        title: "报警设置",
+        filters: {
+          plate: "",
+          name: ""
+        },
+        select: "",
+        oprations: [],
+        allnum: [],
+        allnums: [],
+        options: [],
+        users: [],
+        listLoading: false,
+        sels: [], //列表选中列
+        editFormVisible: false, //编辑界面是否显示
+        editLoading: false,
+        editFormRules: {
+          name: [{
+            required: true,
+            message: "请输入姓名",
+            trigger: "blur"
+          }],
+          plate: [{
+            required: true,
+            message: "请输入车牌号",
+            trigger: "blur"
+          }]
+        },
+        //编辑界面数据
+        editForm: {
+          id: 0,
+          name: "",
+          plate: "",
+          sex: -1,
+          age: 0,
+          birth: "",
+          addr: ""
+        },
+        addFormVisible: false, //新增界面是否显示
+        addLoading: false,
+        WeiXintest:1,
+        Emailtest:1,
+        Mobiletest:1,
+        addFormRules: {
+          name: [{
+            required: true,
+            message: "请输入姓名",
+            trigger: "blur"
+          }],
+          plate: [{
+            required: true,
+            message: "请输入车牌号",
+            trigger: "blur"
+          }]
+        },
+        //新增界面数据
+        // addForm: {
+        //   tmp1max: "",
+        //   tmp1min: "",
+        //   hum1max: -1,
+        //   hum1min: 0,
+        //   birth: "",
+        //   addr: ""
+        // }
+      };
+    },
+    created: function () {
+      this.windowHeigh = liuHeight;
+      this.windowHeighs = liuHeight-400+'px';
+      unitTree().then(data => {
+        if (data.data.code == -1) {
+          this.$message({
+            message: msg,
+            type: "error"
+          });
+        } else {
+          this.oprations = data.data.msg;
+          this.select=data.data.msg[0].id
+        }
+      });
+    },
+    // computed:{
+    //     inpNum:{
+    //         get:function(){
+    //             return this.oldNum;
+
+    //         },
+    //         set:function(newValue){
+    //             this.oldNum=newValue.replace(/[^\d]/g,'');
+    //         }
+    //     }
+    // },
+    methods: {
+      select_node(){
+        // alert(1)
+        this.filters.name=""
+        this.getUserst()
+      },
+      open1() {
+        this.$message({
+          message: this.rerror,
+          type: "warning"
+        });
+      },
+      open2() {
+        this.$message({
+          message: "提交成功",
+          type: "success"
+        });
+      },
+      open3() {
+        this.$message({
+          message: "请勾选设备",
+          type: "warning"
+        });
+      },
+      open4() {
+        this.$message({
+          message: "信息填写有误",
+          type: "warning"
+        });
+      },
+      open5() {
+        this.$message({
+          message: "温度最大值要大于最小值",
+          type: "warning"
+        });
+      },
+      open6() {
+        this.$message({
+          message: "湿度最大值要大于最小值",
+          type: "warning"
+        });
+      },
+      open7() {
+        this.$message({
+          message: "阀值设置没有填写完整或填写有误",
+          type: "warning"
+        });
+      },
+      open8() {
+        this.$message({
+          message: "升级报警设置没有填写完整或填写有误",
+          type: "warning"
+        });
+      },
+      open9() {
+        this.$message({
+          message: "邮箱没有填写完整或填写有误",
+          type: "warning"
+        });
+      },
+      open10() {
+        this.$message({
+          message: "手机号没有填写完整或填写有误",
+          type: "warning"
+        });
+      },
+      open11() {
+        this.$message({
+          message: "微信号没有填写完整",
+          type: "warning"
+        });
+      },
+      open12() {
+        this.$message({
+          message: "阀值设置温度值不能相等",
+          type: "warning"
+        });
+      },
+      open13() {
+        this.$message({
+          message: "阀值设置湿度值不能相等",
+          type: "warning"
+        });
+      },
+      open20() {
+        this.$message({
+          message: "联系方式至少选填一个",
+          type: "warning"
+        });
+      },
+      toggleSelection(rows) {
+        if (rows) {
+          rows.forEach(row => {
+            this.$refs.multipleTable.toggleRowSelection(row)
+          });
+        } else {
+          this.$refs.multipleTable.clearSelection();
+        }
+      },
+
+      handleSelectionChange(val) {
+        this.multipleSelection = val;
+      },
+       // excel导出
+      exportTable() {
+        // this.loading2=true;
+        // setTimeout(()=>{
+        //   // this.loading2=false
+        // },3000)
+        window.location.href =
+              "http://114.55.138.209:8091/jygpsTmp/sysnodeinfo/deviceManagementExportExcel?unitIds=" +
+              this.select+
+              "&nodename=" +
+              this.filters.name;
+      },
+      // excel导出结束
+      closeShow() {
+        // this.getUsers();
+        this.addFormVisible = false;
+        // this.handleSelectionChange();
+        this.getUsers();
+        this.handleSelectionChange();
+      },
+      handleSelectionChange(row) {
+        // console.log(row)
+        this.nodeIds = [];
+        for (var i = 0; i < row.length; i++) {
+          this.nodeIds[i] = row[i].id;
+         
+        }
+        // console.log(row);
+        // console.log(this.nodeIds);
+      },
+      //分页
+
+      handleSizeChange(val) {
+        // alert(`每页 ${val} 条`);
+        this.size = val;
+        this.getUsers();
+      },
+      handleCurrentChange(val) {
+        this.page = val;
+        this.getUsers();
+      },
+      //获取用户列表
+      getUsers() {
+        // alert(this.filters.name)
+        var that = this;
+        let para = {
+          page: this.page,
+          size: this.size,
+          unitIds: that.select,
+          nodename: that.filters.name
+        };
+        this.listLoading = true;
+        //查询的结果
+        equipment(para).then(res => {
+          this.allnum = res.data.msg.rows;
+          this.total = res.data.msg.total;
+          console.log(res.data.msg.rows);
+          this.listLoading = false;
+        });
+      },
+      getUserst() {
+        var that = this;
+        let para = {
+          page: this.page,
+          size: 9999,
+          unitIds: that.select
+        };
+
+        console.log(para)
+        this.listLoading = true;
+        //查询的结果
+        equipment(para).then(res => {
+          this.allnums = res.data.msg.rows;
+          // this.total = res.data.msg.total;
+          console.log(res.data.msg.rows);
+          this.listLoading = false;
+        });
+      },
+
+      //显示编辑界面
+      spanShows() {
+        this.spanShow = false;
+      },
+      //显示报警界面
+      handleAdd: function () {
+        this.title = "报警设置";
+        if (this.nodeIds.length <= 0) {
+          this.open3();
+          return;
+        }
+        this.addFormVisible = true;
+        var that = this;
+          (that.addForm.tmp1max = ""),
+          (that.addForm.tmp1min = ""),
+          (that.addForm.hum1max = ""),
+          (that.addForm.hum1min = ""),
+          (that.addForm.level2NextTime = ""),
+          (that.addForm.level3NextTime = ""),
+          (that.addForm.level4NextTime = ""),
+          (that.addForm.level1Emails = ""),
+          (that.addForm.level2Emails = ""),
+          (that.addForm.level3Emails = ""),
+          (that.addForm.level4Emails = ""),
+          (that.addForm.level1Mobiles = ""),
+          (that.addForm.level2Mobiles = ""),
+          (that.addForm.level3Mobiles = ""),
+          (that.addForm.level4Mobiles = "");
+          that.addForm.level1WeiXin = "";
+          that.addForm.level2WeiXin = "";
+          that.addForm.level3WeiXin = "";
+          that.addForm.level4WeiXin = "";
+      },
+      handleEdit: function (index, row) {
+        this.title = "编辑设置";
+        this.addFormVisible = true;
+        this.nodeIds = [];
+        this.nodeIds.push(row.id);
+        console.log(this.nodeIds);
+        var that = this;
+        let para = {
+          id: that.nodeIds[0]
+        };
+        getWarnData(para).then(data => {
+          console.log(data);
+          (that.addForm.tmp1max = data.msg.tmp1max),
+          (that.addForm.tmp1min = data.msg.tmp1min),
+          (that.addForm.hum1max = data.msg.hum1max),
+          (that.addForm.hum1min = data.msg.hum1min),
+          (that.addForm.level2NextTime = data.msg.level2NextTime),
+          (that.addForm.level3NextTime = data.msg.level3NextTime),
+          (that.addForm.level4NextTime = data.msg.level4NextTime),
+          (that.addForm.level1Emails = data.msg.level1Emails),
+          (that.addForm.level2Emails = data.msg.level2Emails),
+          (that.addForm.level3Emails = data.msg.level3Emails),
+          (that.addForm.level4Emails = data.msg.level4Emails),
+          (that.addForm.level1Mobiles = data.msg.level1Mobiles),
+          (that.addForm.level2Mobiles = data.msg.level2Mobiles),
+          (that.addForm.level3Mobiles = data.msg.level3Mobiles),
+          (that.addForm.level4Mobiles = data.msg.level4Mobiles);
+          that.addForm.level1WeiXin = data.msg.level1WeiXin;
+          that.addForm.level2WeiXin = data.msg.level2WeiXin;
+          that.addForm.level3WeiXin = data.msg.level3WeiXin;
+          that.addForm.level4WeiXin = data.msg.level4WeiXin;
+        });
+      },
+      clecl: function () {
+        this.getUsers();
+        this.handleSelectionChange();
+      },
+      //报警/编辑的提交
+      addSubmit: function () {
+        // this.addLoading=true
+        if (this.addForm.tmp1max) {
+          var reg = /^(-|\+)?\d+$/
+          if (!reg.test(this.addForm.tmp1max)) {
+            // alert(this.addForm.tmp1max)
+            this.open7()
+            return
+          }
+        }
+        if (this.addForm.tmp1min) {
+          var reg = /^(-|\+)?\d+$/
+          if (!reg.test(this.addForm.tmp1min)) {
+            this.open7()
+            return
+          }
+        }
+        if (this.addForm.tmp1min) {
+          if(this.addForm.tmp1max<this.addForm.tmp1min){
+          this.open5()
+          return
+        }
+        if(this.addForm.tmp1max==this.addForm.tmp1min){
+          this.open12()
+          return
+        }
+        }
+        // 升级报警
+        if (this.addForm.level2NextTime) {
+          var reg = /^[0-9]*$/
+          if (!reg.test(this.addForm.level2NextTime)) {
+            
+            this.open8()
+            return
+          }
+        }
+        if (this.addForm.level3NextTime) {
+          var reg = /^[0-9]*$/
+          if (!reg.test(this.addForm.level3NextTime)) {
+            this.open8()
+            return
+          }
+        }
+        if (this.addForm.level4NextTime) {
+          var reg = /^[0-9]*$/
+          if (!reg.test(this.addForm.level4NextTime)) {
+            this.open8()
+            return
+          }
+        }
+        // 升级报警
+          //  console.log(this.addForm.level2Emails == ""||!this.addForm.level2Emails)
+        if ((this.addForm.level1Emails == "")||(!this.addForm.level1Emails)){}else {
+         
+          if(this.addForm.level1Emails.split('@').length<2){
+            this.open9()
+              return
+          }
+          if(this.addForm.level1Emails.split('@').length===2){
+            var reg=/^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/
+          if (!reg.test(this.addForm.level1Emails)) {
+              this.open9()
+              return
+          }  
+          }
+          if(this.addForm.level1Emails.split('@').length>2){
+            if(this.addForm.level1Emails.split(',').length===1){
+            this.open9()
+              return
+          }
+          }
+      
+        } 
+        if ((this.addForm.level2Emails == "")||(!this.addForm.level2Emails)){}else {
+          
+          if(this.addForm.level2Emails.split('@').length<2){
+            this.open9()
+              return
+          }
+          if(this.addForm.level2Emails.split('@').length===2){
+           var reg=/^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/
+          if (!reg.test(this.addForm.level2Emails)) {
+              this.open9()
+              return
+          }}
+          if(this.addForm.level2Emails.split('@').length>2){
+            if(this.addForm.level2Emails.split(',').length===1){
+            this.open9()
+              return
+          }
+          }
+        }
+        if ((this.addForm.level2Emails == "")||(!this.addForm.level2Emails)){}else {
+          if(this.addForm.level3Emails.split('@').length<2){
+            this.open9()
+              return
+          }
+          if(this.addForm.level3Emails.split('@').length===2){
+           var reg=/^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/
+          if (!reg.test(this.addForm.level3Emails)) {
+              this.open9()
+              return
+          }}
+          if(this.addForm.level3Emails.split('@').length>2){
+            if(this.addForm.level3Emails.split(',').length===1){
+            this.open9()
+              return
+          }
+          }
+        }
+        if ((this.addForm.level2Emails == "")||(!this.addForm.level2Emails)){}else {
+          if(this.addForm.level4Emails.split('@').length<2){
+            this.open9()
+              return
+          }
+          if(this.addForm.level4Emails.split('@').length===2){
+           var reg=/^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/
+          if (!reg.test(this.addForm.level4Emails)) {
+              this.open9()
+              return
+          }}
+          if(this.addForm.level4Emails.split('@').length>2){
+            if(this.addForm.level4Emails.split(',').length===1){
+            this.open9()
+              return
+          }
+          }
+        }
+        if ((this.addForm.level1Mobiles == "")||(!this.addForm.level1Mobiles)){}else {
+        
+          var reg=/^1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          var regs=/^1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          var regss=/^1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          if (!reg.test(this.addForm.level1Mobiles)&&!regs.test(this.addForm.level1Mobiles)&&!regss.test(this.addForm.level1Mobiles)) {
+             this.open10()
+             return 
+          }
+        } 
+        if ((this.addForm.level2Mobiles == "")||(!this.addForm.level2Mobiles)){}else {
+          var reg=/^1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          var regs=/^1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          var regss=/^1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          if (!reg.test(this.addForm.level2Mobiles)&&!regs.test(this.addForm.level2Mobiles)&&!regss.test(this.addForm.level2Mobiles)) {
+              this.open10()
+              return
+          }
+        } 
+        if ((this.addForm.level3Mobiles == "")||(!this.addForm.level3Mobiles)){}else {
+          var reg=/^1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          var regs=/^1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          var regss=/^1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          if (!reg.test(this.addForm.level3Mobiles)&&!regs.test(this.addForm.level3Mobiles)&&!regss.test(this.addForm.level3Mobiles)) {
+              this.open10()
+              return
+          }
+        } 
+        if ((this.addForm.level4Mobiles == "")||(!this.addForm.level4Mobiles)){}else {
+          var reg=/^1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          var regs=/^1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          var regss=/^1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8},1[3|4|5|6|7|8|9][0-9]\d{8}$/
+          if (!reg.test(this.addForm.level4Mobiles)&&!regs.test(this.addForm.level4Mobiles)&&!regss.test(this.addForm.level4Mobiles)) {
+              this.open10()
+              return
+          }
+        } 
+        // if((this.addForm.level1Mobiles === "")&&(this.addForm.level2Mobiles==="")&&(this.addForm.level3Mobiles==="")&&(this.addForm.level4Mobiles==="")&&this.addForm.level1Emails === ""&&this.addForm.level2Emails===""&&this.addForm.level3Emails===""&&this.addForm.level4Emails===""&&this.addForm.level1WeiXin === ""&&this.addForm.level2WeiXin===""&&this.addForm.level3WeiXin===""&&this.addForm.level4WeiXin==="")
+        // {
+          
+        //   this.open20()
+        //   return
+          
+        // }
+        this.num = "";
+        for (var i = 0; i < this.nodeIds.length; i++) {
+          var that = this;
+          let para = {
+            nodeIds: that.nodeIds[i],
+            tmp1max: that.addForm.tmp1max,
+            tmp1min: that.addForm.tmp1min,
+            hum1max: that.addForm.hum1max,
+            hum1min: that.addForm.hum1min,
+            level2NextTime: that.addForm.level2NextTime,
+            level3NextTime: that.addForm.level3NextTime,
+            level4NextTime: that.addForm.level4NextTime,
+            level1Emails: that.addForm.level1Emails,
+            level2Emails: that.addForm.level2Emails,
+            level3Emails: that.addForm.level3Emails,
+            level4Emails: that.addForm.level4Emails,
+            level1Mobiles: that.addForm.level1Mobiles,
+            level2Mobiles: that.addForm.level2Mobiles,
+            level3Mobiles: that.addForm.level3Mobiles,
+            level4Mobiles: that.addForm.level4Mobiles,
+            level1WeiXin: that.addForm.level1WeiXin,
+            level2WeiXin: that.addForm.level2WeiXin,
+            level3WeiXin: that.addForm.level3WeiXin,
+            level4WeiXin: that.addForm.level4WeiXin
+          };
+          //查询的结果
+          this.num = i;
+          this.addLoading=false
+          saveWarnBatch(para).then(data => {
+            
+            var that = this;
+            if (data.code == -1) {
+              // if(i==this.nodeIds.length){
+                this.addFormVisible = false;
+                this.rerror=data.msg
+              this.open1();
+              //  }
+            } else {
+              // alert(this.num+1==this.nodeIds.length)
+              
+              // if (this.num + 1 == this.nodeIds.length) {
+                this.num++;
+               
+                // this.open2(this.getUsers());
+                this.open2();
+                this.addFormVisible = false;
+                this.handleSelectionChange();
+                this.nodeIds = [];
+                return;
+              // }
+              (that.nodeIds = []),
+              (that.addFormVisible = false),
+              (that.tmp1max = ""),
+              (that.tmp1min = ""),
+              (that.hum1max = ""),
+              (that.hum1min = ""),
+              (that.level2NextTime = ""),
+              (that.level3NextTime = ""),
+              (that.level4NextTime = ""),
+              (that.level1Emails = ""),
+              (that.level2Emails = ""),
+              (that.level3Emails = ""),
+              (that.level4Emails = ""),
+              (that.level1Mobiles = ""),
+              (that.level2Mobiles = ""),
+              (that.level3Mobiles = ""),
+              (that.level4Mobiles = "");
+              that.level1WeiXin = "";
+              that.level2WeiXin = "";
+              that.level3WeiXin = "";
+              that.level4WeiXin = "";
+            }
+          });
+        }
+        this.getUsers();
+        this.handleSelectionChange();
+      }
+    },
+
+    // 表单验证
+    // computed: {
+    //   inpNum: {
+    //     get: function () {
+    //       return this.oldNum;
+    //     },
+    //     set: function (newValue) {
+    //       this.oldNum = newValue.replace(/[^\d]/g, "");
+    //     }
+    //   }
+    // },
+    // beforeMount () {
+      
+    // },
+    mounted() {
+     
+      this.getUsers();
+    }
+  };
+</script>
+<style>
+  .jian-ge .el-form-item__error {
+    width: 100px;
+  }
+
+  .waring .el-dialog__body {
+    height: 400px;
+    overflow: auto;
+    padding-bottom: 0px;
+    padding-top: 0px;
+    border: 1px solid #bfcbd9;
+  }
+</style>
+
+<style scoped>
+  .waring{
+    height: 130%;
+    overflow: hidden;
+    top:-10%;
+  }
+  .el-form-item__error {
+    width: 100px;
+  }
+
+  .el-col {
+    background: #fff;
+  }
+
+  .toolbar-bot {
+    text-align: right;
+    margin-top: 10px;
+  }
+
+  .toolbar {
+    box-shadow: 0 0 6px 0 #dcdfe6;
+  }
+
+  .el-form-item i img {
+    width: 20px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .el-form-item span {
+    color: #328fea;
+    line-height: 21px;
+    margin-right: 10px;
+  }
+
+  .font-color {
+    margin-right: 10px;
+    color: #328fea;
+  }
+
+  .el-table {
+    margin-bottom: 80px;
+  }
+
+  .footer-bottom {
+    position: fixed;
+    padding: 0 0 10px 0;
+    bottom: 0;
+    left: 224px;
+    width: 81%;
+    background: #fff;
+    z-index: 100;
+  }
+
+  .el-dialog__header {
+    background: darkgreen !important;
+  }
+
+  .title-color {
+    width: 100px;
+    text-align: center;
+    float: left;
+    line-height: 35px;
+  }
+
+  .title-span {
+    width: 20px;
+    text-align: center;
+    float: left;
+    line-height: 35px;
+  }
+
+  .title-fen {
+    width: 40px;
+    text-align: center;
+    float: left;
+    line-height: 35px;
+  }
+
+  .label {
+    width: 100px;
+    padding: 11px 0 11px 0 !important;
+  }
+
+  .jian-ge {
+    /* padding: 6px 0; */
+  }
+
+  .blue {
+    color: #328fea;
+  }
+
+  .dialog-footer {
+    text-align: center;
+  }
+  .baojing {
+    width: 540px;
+    background: #fff;
+    border-radius: 3px;
+    overflow: hidden;
+    position: fixed;
+    left: 50%;
+    top: 15%;
+    margin-left: -270px;
+  }
+
+  .radius-mg {
+    float: right;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    overflow: hidden;
+    color: #fff;
+    text-align: center;
+    background: #2e86df;
+    margin: 2px 2px 0 0;
+  }
+</style>

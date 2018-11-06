@@ -1,0 +1,142 @@
+import Login from './views/Login'
+import NotFound from './views/404'
+import Home from './views/Home'
+import Main from './views/Main'
+import Table from './views/historical/Table'
+import equipment from './views/equipment/equipment'
+import monitor from './views/monitor/monitor'
+import echarts from './views/index/echarts'
+import Passw from './views/password'
+// 报警记录
+import Alarmrecord from './views/Alarmrecord/Alarmrecord'
+// 用户列表
+import Userlist from './views/Userlist/Userlist'
+import vehicletmpdetailinfo from './views/vehicletmpdetailinfo/vehicletmpdetailinfo'
+// 跳转趋势图页面
+import Trend from './views/monitor/trendss'
+let routes = [
+
+    {
+        path: '/',
+        component: Login,
+        name: '',
+        hidden: true
+    },
+    {
+        path: '/password',
+        component: Passw,
+        name: '',
+        hidden: true
+    },
+    {
+        path: '/404',
+        component: NotFound,
+        name: '',
+        hidden: true
+    },
+    {
+        path: '/echarts',
+        component: Home,
+         name: '',
+         iconCls: 'fa el-icon-menu',
+          leaf: true,//只有一个节点
+         children: [
+            { path: '/echarts', component: echarts, name: '首页' }
+         ]
+     },
+    {
+        path: '/monitor',
+        component: Home,
+        name: '',
+        iconCls: 'fa fa-address-card',
+        leaf: true,//只有一个节点
+        children: [
+            { path: '/monitor',
+             component: monitor,
+              name: '监控中心',
+          },
+          {
+            path: '/trendss',
+            component: Trend,
+            name: 'trendss',
+            hidden: true
+          }
+        ]
+    },
+    {
+        path: '/',
+        component: Home,
+        name: '',
+        iconCls: 'fa el-icon-setting',
+         leaf: true,//只有一个节点
+        children: [
+            { path: '/equipment', component: equipment, name: '设备管理'
+           },
+
+        ]
+    },
+    {
+        path: '/',
+        component: Home,
+        name: '',
+        iconCls: 'fa el-icon-setting',
+         leaf: true,//只有一个节点
+        children: [
+            { path: '/Alarmrecord', component: Alarmrecord, name: '报警记录'
+           },
+
+        ]
+    },
+    {
+        path: '/',
+        component: Home,
+        name: '',
+        iconCls: 'fa el-icon-setting',
+         leaf: true,//只有一个节点
+        children: [
+            { path: '/Userlist', component: Userlist, name: '用户列表'
+           },
+        ]
+    },
+    {
+        path: '/',
+        component: Home,
+        name: '',
+        iconCls: 'fa el-icon-setting',
+         leaf: true,//只有一个节点
+        children: [
+            { path: '/vehicletmpdetailinfo', component: vehicletmpdetailinfo, name: '仓库温度报表'
+           },
+        ]
+    },
+    {
+        path: '/monitor',
+        component: Home,
+        name: '',
+        iconCls: 'fa fa-address-card',
+        leaf: true,//只有一个节点
+        children: [
+            { path: '/monitor',
+             component: monitor,
+              name: '监控中心',
+          }
+        ]
+    },
+    {
+        path: '/',
+        component: Home,
+        name: '',
+        iconCls: 'fa el-icon-document',//图标样式class
+         leaf: true,//只有一个节点
+        children: [
+            { path: '/table', component: Table, name: '历史查询'},
+        ]
+    },
+    {
+        path: '*',
+        hidden: true,
+        redirect: { path: '/404' }
+    },
+];
+
+export default routes;

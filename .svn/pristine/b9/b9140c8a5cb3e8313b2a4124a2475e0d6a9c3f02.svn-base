@@ -1,0 +1,82 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "cf-blob.js@0.0.1",
+        "scope": null,
+        "escapedName": "cf-blob.js",
+        "name": "cf-blob.js",
+        "rawSpec": "0.0.1",
+        "spec": "0.0.1",
+        "type": "version"
+      },
+      "/Users/hexige/code/vue-lk-web/node_modules/jspdf"
+    ]
+  ],
+  "_cnpm_publish_time": 1449431255026,
+  "_from": "cf-blob.js@0.0.1",
+  "_hasShrinkwrap": false,
+  "_id": "cf-blob.js@0.0.1",
+  "_inCache": true,
+  "_location": "/cf-blob.js",
+  "_nodeVersion": "0.12.7",
+  "_npmUser": {
+    "name": "thomas3577",
+    "email": "thomas3577@gmx.net"
+  },
+  "_npmVersion": "2.11.3",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "cf-blob.js@0.0.1",
+    "scope": null,
+    "escapedName": "cf-blob.js",
+    "name": "cf-blob.js",
+    "rawSpec": "0.0.1",
+    "spec": "0.0.1",
+    "type": "version"
+  },
+  "_requiredBy": [
+    "/jspdf"
+  ],
+  "_resolved": "https://registry.npm.taobao.org/cf-blob.js/download/cf-blob.js-0.0.1.tgz",
+  "_shasum": "f5ab7e12e798caf08ccf828c69aba0f063d83f99",
+  "_shrinkwrap": null,
+  "_spec": "cf-blob.js@0.0.1",
+  "_where": "/Users/hexige/code/vue-lk-web/node_modules/jspdf",
+  "author": {
+    "name": "Eli Grey"
+  },
+  "bugs": {
+    "url": "https://github.com/eligrey/Blob.js/issues"
+  },
+  "dependencies": {},
+  "description": "An HTML5 saveAs() FileSaver implementation",
+  "devDependencies": {},
+  "directories": {},
+  "dist": {
+    "shasum": "f5ab7e12e798caf08ccf828c69aba0f063d83f99",
+    "size": 5871,
+    "noattachment": false,
+    "tarball": "http://registry.npm.taobao.org/cf-blob.js/download/cf-blob.js-0.0.1.tgz"
+  },
+  "gitHead": "3e15eecda4c3ca13d65dfd480876947551aecf0c",
+  "homepage": "https://github.com/eligrey/Blob.js",
+  "license": "ISC",
+  "main": "Blob.js",
+  "maintainers": [
+    {
+      "name": "thomas3577",
+      "email": "thomas3577@gmx.net"
+    }
+  ],
+  "name": "cf-blob.js",
+  "optionalDependencies": {},
+  "publish_time": 1449431255026,
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eligrey/Blob.js.git"
+  },
+  "scripts": {},
+  "version": "0.0.1"
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<head>
+  <meta charset="utf-8">
+  <title>捷依冷库平台</title> 
+</head>
+<!-- <script src="//webapi.amap.com/maps?v=1.3&key=1f0db36b82f9faab094887faee232b52"></script> -->
+<!-- <link rel="stylesheet" href="https://cache.amap.com/lbs/static/main.css" />
+  <script src="https://cache.amap.com/lbs/static/es5.min.js"></script> -->
+<link rel="stylesheet" href="https://cache.amap.com/lbs/static/main1119.css"/>
+<script src="https://webapi.amap.com/maps?v=1.4.9&key=1f0db36b82f9faab094887faee232b52"></script>
+<!-- <script src="https://webapi.amap.com/maps?v=1.4.9&key=f7d73cd322ed1f221408f667fd365b2b"></script> -->
+<!-- <script type="text/javascript" src="https://cache.amap.com/lbs/static/addToolbar.js"></script> -->
+<!--引入UI组件库（1.0版本） -->
+<script src="//webapi.amap.com/ui/1.0/main.js"></script>
+<script type="text/javascript" src="http://webapi.amap.com/demos/js/liteToolbar.js"></script>
+<!-- <script type="text/javascript" src="http://cache.amap.com/lbs/static/addToolbar.js"></script> -->
+<link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
+<!-- <script src="//webapi.amap.com/ui/1.0/main.js"></script> -->
+<body>
+  <div id="app">
+
+  </div>
+  <!-- built files will be auto injected -->
+</body>
+
+</html>
